@@ -49,13 +49,15 @@ const Dashboard = () => {
       description: currentUserDetails
         ? `Hi ${currentUserDetails.name}, you're a ${currentUserDetails.Role}`
         : "Loading your personal info...",
-      color: "from-green-500 to-teal-600",
-      darkColor: "from-green-600 to-teal-700",
+      color: "from-white to-gray-100", // 🌤️ Soft neutral for light mode
+      darkColor: "from-gray-200 to-gray-300", // 🕶️ Light gray in dark theme
       size: "large",
-      link:"/dashboard/updatedetails",
-      visible: !!currentUserDetails, // 👈 make sure user exists
+      link: "/dashboard/updatedetails",
+      visible: !!currentUserDetails,
       userInfo: currentUserDetails,
-    },
+    }
+    
+    ,
     {
       id: "crud",
       icon: "⚙️",
@@ -390,50 +392,63 @@ const Dashboard = () => {
 
       {/* 🧠 Content Area */}
       {card.id === "details" ? (
-        <div className="relative z-10 p-6 h-full flex flex-col justify-between text-white">
-          {card.userInfo ? (
-            <>
-              <div>
-                <h3 className="text-xl font-bold mb-2 text-yellow-200">
-                  👋 Hello, {card.userInfo.name}
-                </h3>
-                <p className="text-white/90 text-sm">📧 {card.userInfo.email}</p>
-                <p className="text-white/90 text-sm">🧩 Role: {card.userInfo.Role}</p>
-              </div>
-
-              <div className="mt-4 flex justify-end">
-                <button
-                  className="inline-flex items-center px-4 py-2 bg-white/20 backdrop-blur-md rounded-full text-white font-medium hover:bg-white/30 transition-all duration-300 transform hover:scale-105"
-                  
-                    // e.stopPropagation(); // 🛑 Don't trigger card click nav
-                    onClick={() => card.link && handleCardClick(card)
-                  }
-                >
-                  View Full Info
-                  <svg
-                    className="w-4 h-4 ml-2"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
-                </button>
-              </div>
-
-              <div className="absolute top-4 right-4 px-2 py-1 bg-green-400/20 backdrop-blur-md rounded-full text-xs font-medium text-green-100">
-                You
-              </div>
-            </>
-          ) : (
-            <p>Loading your info...</p>
-          )}
-        </div>
+     <div className="relative z-10 p-6 h-full flex flex-col justify-between text-gray-900">
+     {card.userInfo ? (
+       <>
+         {/* Personal Details */}
+         <div className="space-y-3">
+           <h3 className="text-xl font-bold text-indigo-800 flex items-center gap-2">
+             👋 Hello, <span>{card.userInfo.name}</span>
+           </h3>
+           <div className="text-sm">
+             <span className="block text-gray-600 font-medium">📧 Email:</span>
+             <span className="block text-gray-800 font-bold">
+               {card.userInfo.email}
+             </span>
+           </div>
+           <div className="text-sm">
+             <span className="block text-gray-600 font-medium">🧩 Role:</span>
+             <span className="block text-gray-800 font-bold capitalize">
+               {card.userInfo.Role}
+             </span>
+           </div>
+         </div>
+ 
+         {/* Button */}
+         <div className="mt-4 flex justify-end">
+           <button
+             className="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 transition duration-300"
+             onClick={(e) => {
+               e.stopPropagation();
+               handleCardClick(card);
+             }}
+           >
+             View Full Info
+             <svg
+               className="w-4 h-4 ml-2"
+               fill="none"
+               stroke="currentColor"
+               viewBox="0 0 24 24"
+             >
+               <path
+                 strokeLinecap="round"
+                 strokeLinejoin="round"
+                 strokeWidth={2}
+                 d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"
+               />
+             </svg>
+           </button>
+         </div>
+ 
+         {/* Badge */}
+         <div className="absolute top-4 right-4 px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold shadow-sm">
+           You
+         </div>
+       </>
+     ) : (
+       <p className="text-gray-600 animate-pulse">Loading your info...</p>
+     )}
+   </div>
       ) : (
         <div className="relative z-10 p-6 h-full flex flex-col justify-between text-white">
           <div>

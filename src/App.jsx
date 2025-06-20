@@ -1,19 +1,19 @@
-// AppRoutes.jsx
-
 import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useUser } from "./context/UserProvider";
 import ProtectedRoute from "./ProtectedRoute";
-import InterviewPrep from './trial/InterviewPrep.jsx'
-// Component imports
-import Login from "./Login.jsx";
-import Register from "./Register.jsx";
-import Dashboard from "./Dashboard.jsx";
+import Dashboard from "./Dashboard";
+
+// Pages
+import Login from "./Login";
+import Register from "./Register";
 import ChangePasswordCard from "./trial/Changepassword";
-import CrudStudents from "./Admin_section/Crudstudents.jsx";
-import MakeAdmin from "./tanushree/MakeAdmin.jsx";
-import StudentDetails from "./trial/StudentDetails.jsx";
-import Complaints from "./trial/Complaints.jsx";
+import CrudStudents from "./Admin_section/Crudstudents";
+import MakeAdmin from "./tanushree/MakeAdmin";
+import StudentDetails from "./trial/StudentDetails";
+import Complaints from "./trial/Complaints";
+import InterviewPrep from "./trial/InterviewPrep";
+import Cards from "./cards"; // 👈 import this for index route
 
 const AppRoutes = () => {
   const { user } = useUser();
@@ -30,7 +30,7 @@ const AppRoutes = () => {
         element={!user ? <Register /> : <Navigate to="/dashboard" />}
       />
 
-      {/* Protected Routes */}
+      {/* Protected Layout Route with Nested Routes */}
       <Route
         path="/dashboard"
         element={
@@ -38,55 +38,16 @@ const AppRoutes = () => {
             <Dashboard />
           </ProtectedRoute>
         }
-      />
-      <Route
-        path="/dashboard/changepassword"
-        element={
-          <ProtectedRoute>
-            <ChangePasswordCard />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/dashboard/students"
-        element={
-          <ProtectedRoute>
-            <CrudStudents />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/dashboard/updatedetails"
-        element={
-          <ProtectedRoute>
-            <StudentDetails />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/dashboard/superadmin"
-        element={
-          <ProtectedRoute>
-            <MakeAdmin />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/dashboard/complaints"
-        element={
-          <ProtectedRoute>
-            <Complaints />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-  path="/dashboard/interview"
-  element={
-    <ProtectedRoute>
-      <InterviewPrep />
-    </ProtectedRoute>
-  }
-/>
+      >
+        {/* Nested Routes - rendered inside Dashboard's <Outlet /> */}
+        <Route index element={<Cards />} />
+        <Route path="changepassword" element={<ChangePasswordCard />} />
+        <Route path="students" element={<CrudStudents />} />
+        <Route path="updatedetails" element={<StudentDetails />} />
+        <Route path="superadmin" element={<MakeAdmin />} />
+        <Route path="complaints" element={<Complaints />} />
+        <Route path="interview" element={<InterviewPrep />} />
+      </Route>
 
       {/* Fallback */}
       <Route path="*" element={<Navigate to="/login" />} />
@@ -94,4 +55,4 @@ const AppRoutes = () => {
   );
 };
 
-export default AppRoutes; // 🚀 This is the missing piece!
+export default AppRoutes;

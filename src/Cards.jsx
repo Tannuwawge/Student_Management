@@ -1,29 +1,29 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect  } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "./context/UserProvider";
 export default function Cards() {
-   const navigate = useNavigate();
- const { logout, email: userEmail, theme, toggleTheme, role,currentUserDetails} = useUser(); // now including toggleTheme    
- 
-//  role fetch
 
+  const navigate = useNavigate();
 
-  useEffect(() => {
-    // Fetch user role from backend if needed
-    const fetchRole = async () => {
-      try {
-        // Simulate API call or use actual logic
-        setRole("admin");
-      } catch (err) {
-        console.error("Error fetching role:", err);
-      }
-    };
-    fetchRole();
-  }, [userEmail]);
-
-
-  //cards data
-   const cardData = [
+  const {
+    email: userEmail,
+    theme,
+    role,
+    currentUserDetails,
+  } = useUser();
+  
+  // 🧠 Normalize role for safe matching
+  const normalizedRole = (currentUserDetails?.Role || role || "").toLowerCase();
+  
+  // Optional: debug logs
+  console.log("👤 Role:", normalizedRole);
+  console.log("📋 User Details:", currentUserDetails);
+  
+  // ⛑️ Safe fallback (optional UI)
+  if (!currentUserDetails && !role) return <div>Loading your dashboard...</div>;
+  
+  // 🗂️ Card data
+  const cardData = [
     {
       id: "details",
       icon: "📋",
@@ -49,9 +49,7 @@ export default function Cards() {
       darkColor: "from-orange-600 to-red-700",
       size: "medium",
       link: "/dashboard/students",
-      visible:
-        currentUserDetails?.Role === "admin" ||
-        currentUserDetails?.Role === "superadmin",
+      visible: ["admin", "superadmin"].includes(normalizedRole),
     },
     {
       id: "reports",
@@ -62,9 +60,7 @@ export default function Cards() {
       darkColor: "from-indigo-600 to-fuchsia-700",
       size: "medium",
       link: "/dashboard/reports",
-      visible:
-        currentUserDetails?.Role === "admin" ||
-        currentUserDetails?.Role === "superadmin",
+      visible: ["admin", "superadmin"].includes(normalizedRole),
       width: 266,
     },
     {
@@ -76,9 +72,7 @@ export default function Cards() {
       darkColor: "from-cyan-600 to-blue-700",
       size: "small",
       link: "/dashboard/enrollments",
-      visible:
-        currentUserDetails?.Role === "admin" ||
-        currentUserDetails?.Role === "superadmin",
+      visible: ["admin", "superadmin"].includes(normalizedRole),
     },
     {
       id: "roles",
@@ -89,7 +83,7 @@ export default function Cards() {
       darkColor: "from-purple-700 to-pink-700",
       size: "large",
       link: "/dashboard/superadmin",
-      visible: currentUserDetails?.Role === "superadmin",
+      visible: normalizedRole === "superadmin",
     },
     {
       id: "notes",
@@ -99,8 +93,8 @@ export default function Cards() {
       color: "from-yellow-400 to-yellow-600",
       darkColor: "from-yellow-500 to-yellow-700",
       size: "medium",
-      link: "https://w3chedo.web.app/note-web-view", // External site
-      visible: currentUserDetails?.Role === "student", // ✅ Only students
+      link: "https://w3chedo.web.app/note-web-view",
+      visible: normalizedRole === "student",
     },
     {
       id: "mcq",
@@ -110,8 +104,8 @@ export default function Cards() {
       color: "from-emerald-500 to-lime-600",
       darkColor: "from-emerald-600 to-lime-700",
       size: "medium",
-      link: "/dashboard/mcq", // ← make sure this route leads to quiz page
-      visible: currentUserDetails?.Role === "student",
+      link: "/dashboard/mcq",
+      visible: normalizedRole === "student",
     },
     {
       id: "mynotes",
@@ -121,8 +115,8 @@ export default function Cards() {
       color: "from-sky-500 to-blue-600",
       darkColor: "from-sky-600 to-blue-700",
       size: "medium",
-      link: "/dashboard/mynotes", // ✅ update to your notes page route
-      visible: currentUserDetails?.Role === "student",
+      link: "/dashboard/mynotes",
+      visible: normalizedRole === "student",
     },
     {
       id: "receipts",
@@ -132,10 +126,9 @@ export default function Cards() {
       color: "from-rose-500 to-pink-600",
       darkColor: "from-rose-600 to-pink-700",
       size: "medium",
-      link: "/dashboard/receipts", // ✅ point to your receipts page
-      visible: currentUserDetails?.Role === "student",
+      link: "/dashboard/receipts",
+      visible: normalizedRole === "student",
     },
-    
     {
       id: "complaints",
       icon: "📣",
@@ -145,10 +138,7 @@ export default function Cards() {
       darkColor: "from-rose-600 to-pink-700",
       size: "medium",
       link: "/dashboard/complaints",
-      visible:
-        currentUserDetails?.Role === "admin" ||
-        currentUserDetails?.Role === "superadmin"||
-        currentUserDetails?.Role === "student",
+      visible: ["student", "admin", "superadmin"].includes(normalizedRole),
     },
     {
       id: "interview",
@@ -158,21 +148,14 @@ export default function Cards() {
       color: "from-blue-500 to-indigo-600",
       darkColor: "from-blue-600 to-indigo-700",
       size: "medium",
-      link: "/dashboard/interview", // 🔗 point to your interview prep page
-      visible:
-        currentUserDetails?.Role === "student" ||
-        currentUserDetails?.Role === "admin" ||
-        currentUserDetails?.Role === "superadmin", // 🎓 Everyone benefits from prep!
+      link: "/dashboard/interview",
+      visible: ["student", "admin", "superadmin"].includes(normalizedRole),
     },
-    
-            
   ];
-
-
-//cards visible
+  
   const visibleCards = cardData.filter((card) => card.visible);
-
-  // card classes
+  
+  // 🧩 Card classes
   const getCardClasses = (size) => {
     const baseClasses =
       "group relative overflow-hidden rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 cursor-pointer";
@@ -187,19 +170,19 @@ export default function Cards() {
         return `${baseClasses} col-span-1 row-span-1 min-h-[160px]`;
     }
   };
-
-  // handle card click
-    const handleCardClick = (card) => {
+  
+  // 🖱️ Click handler
+  const handleCardClick = (card) => {
     if (card.link) {
-      navigate(card.link); // actually navigate now
+      navigate(card.link);
     } else {
       console.log(`Clicked: ${card.title}`);
     }
   };
+  
 
   //theme card
-  
-  // Theme-based styles
+
   const bgGradient = theme === "dark" 
     ? "from-gray-900 via-gray-800 to-gray-900" 
     : "from-slate-50 via-blue-50 to-indigo-100";
@@ -216,16 +199,17 @@ export default function Cards() {
     <>
     
       {/* Body */}
-      <div className="px-6 py-8">
+      <div className="border ">
         <div className="mb-8">
-          <h2 className={`text-3xl font-bold ${textColor} mb-2`}>Welcome back!</h2>
-   
+          <h2 className={`text-3xl font-bold ${textColor} mb-2`}>Welcome  back! vaibhav </h2>
         </div>
 
-     
+
+
 
         {/* Stats */}
-        <div className="mb-12 grid grid-cols-1 md:grid-cols-3 gap-6 max-w-7xl mx-auto">
+        <div className="mb-12 grid grid-cols-1 md:grid-cols-3 gap-6 px-4 md:px-6">
+
   {/* Current Role */}
   <div className={`${cardBg} backdrop-blur-md rounded-2xl p-6 border transition-all duration-300`}>
     <div className="flex items-center justify-between">
@@ -245,7 +229,7 @@ export default function Cards() {
   <div className={`${cardBg} backdrop-blur-md rounded-2xl p-6 border transition-all duration-300`}>
     <div className="flex items-center justify-between">
       <div>
-        <p className={`${secondaryTextColor} text-sm font-medium`}>Total Users</p>
+        <p className={`${secondaryTextColor} text-sm font-medium`}>Total  Users</p>
         <p className={`text-2xl font-bold ${textColor}`}>4</p>
       </div>
       <div className="w-12 h-12 bg-gradient-to-r from-purple-400 to-pink-500 rounded-full flex items-center justify-center">
@@ -271,7 +255,8 @@ export default function Cards() {
            {/* heading for grid */}
            <p className={secondaryTextColor}>Here's what you can do today</p>
            {/* grid */}
-           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6 auto-rows-min max-w-7xl mx-auto">
+           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6 auto-rows-min px-3">
+
   {visibleCards.map((card) => (
   <div
   onClick={() => {
@@ -413,19 +398,22 @@ export default function Cards() {
 
 
         {/* Help Section */}
-        <div className="mt-12 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-3xl p-8 text-white max-w-7xl mx-auto">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-2xl font-bold mb-2">Need help getting started?</h3>
-              <p className="text-white/80">
-                Check out our comprehensive guide to make the most of your dashboard
-              </p>
-            </div>
-            <button className="bg-white/20 backdrop-blur-md px-6 py-3 rounded-full font-medium hover:bg-white/30 transition-all duration-300 transform hover:scale-105">
-              View Guide
-            </button>
-          </div>
-        </div>
+        <div className="mt-12 px-3">
+  <div className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-3xl p-8 text-white w-full">
+    <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      <div>
+        <h3 className="text-2xl font-bold mb-2">Need help getting started?</h3>
+        <p className="text-white/80">
+          Check out our comprehensive guide to make the most of your dashboard
+        </p>
+      </div>
+      <button className="bg-white/20 backdrop-blur-md px-6 py-3 rounded-full font-medium hover:bg-white/30 transition-all duration-300 transform hover:scale-105">
+        View Guide
+      </button>
+    </div>
+  </div>
+</div>
+
       </div>
     </>
   )

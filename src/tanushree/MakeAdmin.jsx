@@ -12,7 +12,7 @@ const MakeAdmin = () => {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`https://api-e5q6islzdq-uc.a.run.app/students`);
+      const res = await fetch(`${BASE_URL}/students`);
       const data = await res.json();
 
       if (res.ok) {
@@ -36,8 +36,10 @@ const MakeAdmin = () => {
     const superPassword = prompt("Enter Superadmin Password:");
     if (!superPassword) return;
 
+    const endpoint = currentRole === "student" ? "/make-admin" : "/make-student";
+
     try {
-      const res = await fetch(`${BASE_URL}/make-student`, {
+      const res = await fetch(`${BASE_URL}${endpoint}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -55,7 +57,7 @@ const MakeAdmin = () => {
             ? "User promoted to Admin ✅"
             : "User demoted to Student ✅"
         );
-        fetchUsers(); // Refresh lists
+        fetchUsers(); // Refresh the lists
       } else {
         alert(`❌ Failed: ${data.message}`);
       }
@@ -91,6 +93,7 @@ const MakeAdmin = () => {
                     type="checkbox"
                     checked={role === "admin"}
                     onChange={() => handleCheckboxClick(user.email, role)}
+                    disabled={user.email === superEmail} // Prevent toggling self
                   />
                 </td>
               </tr>

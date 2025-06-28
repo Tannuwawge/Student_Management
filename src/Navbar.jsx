@@ -50,6 +50,16 @@ const handleThemeToggle = () => {
       </h1>
     </div>
 
+      {/* Center: Conditionally show heading for /dashboard/interview */}
+      {location.pathname === "/dashboard/interview" && (
+  <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2">
+    <h1 className="text-xl md:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-purple-400 to-pink-500 text-transparent bg-clip-text leading-tight">
+      DSA (Chedo Sheets)
+    </h1>
+  </div>
+)}
+
+
     {/* Right Side - Dropdown */}
     <div className="relative">
       <button
@@ -75,6 +85,7 @@ const handleThemeToggle = () => {
       </button>
 
       {/* Dropdown Menu */}
+      <div className="absolute right-0 mt-2 w-48 bg-gray-800 text-white rounded-lg shadow-lg z-50">
       {showDropdown && (
   <div className={`absolute right-0 mt-2 w-48 rounded-xl shadow-xl z-50 ${theme === "dark" ? "bg-gray-800" : "bg-white"}`}>
     
@@ -105,7 +116,10 @@ const handleThemeToggle = () => {
     </button>
 
   </div>
-)}
+)}  
+</div>
+
+  
 
     </div>
   </div>

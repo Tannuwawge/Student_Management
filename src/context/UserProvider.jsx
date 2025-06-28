@@ -3,7 +3,7 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 const UserContext = createContext();
 export const useUser = () => useContext(UserContext);
 
-const BASE_URL = " https://vaibhav-e5q6islzdq-uc.a.run.app";
+const BASE_URL = "https://api-e5q6islzdq-uc.a.run.app";
 
 export const UserProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -24,13 +24,23 @@ export const UserProvider = ({ children }) => {
   const [isStudentsLoading, setIsStudentsLoading] = useState(false);
   const [studentsError, setStudentsError] = useState(null);
   const [currentUserDetails, setCurrentUserDetails] = useState(null);
-  
   useEffect(() => {
-    if (email && currentUserDetails) {
-     
-    }
+    const fetchData = async () => {
+      if (email && currentUserDetails) {
+        try {
+          const res = await fetch(`${BASE_URL}/user/${email}`);
+          const data = await res.json();
+          console.log("🔁 /user data from backend:", data);
+        } catch (err) {
+          console.error("❌ Error fetching /user:", err);
+        }
+      }
+    };
+  
+    fetchData();
   }, [email, currentUserDetails]);
-
+  console.log(currentUserDetails)
+  
   //functionality
   const [formData, setFormData] = useState({
     email: "",

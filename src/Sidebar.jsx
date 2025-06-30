@@ -13,7 +13,8 @@ import {
 
 export default function Sidebar({ sidebarLocked, setSidebarLocked }) {
   const { theme } = useUser();
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(true); // ✅ starts collapsed
+
   const location = useLocation();
   const navigate = useNavigate();
   const [activeItem, setActiveItem] = useState(location.pathname.split('/')[1] || 'dashboard');

@@ -2,6 +2,7 @@ const functions = require("firebase-functions");
 const express = require("express");
 const cors = require("cors");
 const admin = require("firebase-admin");
+const path = require("path");
 
 admin.initializeApp();
 const db = admin.firestore();
@@ -17,7 +18,7 @@ function computeResults(student) {
   return {...student, total, per, grade};
 }
 
-// Add student
+// ✅ Add student
 tanushree.post("/student", async (req, res) => {
   try {
     const data = computeResults(req.body);
@@ -30,7 +31,7 @@ tanushree.post("/student", async (req, res) => {
   }
 });
 
-// Get all students
+// ✅ Get all students
 tanushree.get("/students", async (req, res) => {
   try {
     const snapshot = await db.collection("studentsData").get();
@@ -42,7 +43,7 @@ tanushree.get("/students", async (req, res) => {
   }
 });
 
-// Get student by email
+// ✅ Get student by email
 tanushree.get("/student/:email", async (req, res) => {
   try {
     const email = req.params.email;
@@ -55,7 +56,7 @@ tanushree.get("/student/:email", async (req, res) => {
   }
 });
 
-// Update student
+// ✅ Update student
 tanushree.put("/student/:email", async (req, res) => {
   try {
     const email = req.params.email;
@@ -69,7 +70,7 @@ tanushree.put("/student/:email", async (req, res) => {
 });
 
 
-// Delete student
+// ✅ Delete student
 tanushree.delete("/student/:email", async (req, res) => {
   try {
     const email = req.params.email;
@@ -144,49 +145,48 @@ tanushree.post("/login", async (req, res) => {
   }
 });
 
-// ✅ Make admin
+// ✅ Promote to admin
 tanushree.put("/make-admin", async (req, res) => {
-  const {superEmail, superPassword, email} = req.body;
+  const { superEmail, superPassword, email } = req.body;
 
   if (!superEmail || !superPassword || !email) {
     return res.status(400).json({
       message: "Missing fields",
-      error: "Please provide superEmail, superPassword, and email",
+      error: "Please provide superEmail, superPassword, and target email",
     });
   }
 
   try {
-    const superDoc = await db.collection("studentsData").doc("superadmin@gmail.com").get();
+    // 🔐 Step 1: Authenticate superadmin using document ID (superEmail)
+    const superDoc = await db.collection("studentsData").doc(superEmail).get();
 
     if (!superDoc.exists) {
       return res.status(404).json({
         message: "Superadmin not found",
-        error: "Superadmin document does not exist",
+        error: "No superadmin document found",
       });
     }
 
     const superData = superDoc.data();
 
-    if (
-      superData.superEmail !== superEmail ||
-      superData.superPassword !== superPassword ||
-      superData.Role !== "superadmin"
-    ) {
+    if (superData.password !== superPassword || superData.Role !== "superadmin") {
       return res.status(403).json({
         message: "Invalid superadmin credentials",
-        error: "Authentication failed for superadmin",
+        error: "Password or role mismatch",
       });
     }
 
+    // 👤 Step 2: Find the student to promote
     const studentSnapshot = await db
       .collection("studentsData")
       .where("email", "==", email)
+      .limit(1)
       .get();
 
     if (studentSnapshot.empty) {
       return res.status(404).json({
-        message: "Student not found",
-        error: "No student found with the provided email",
+        message: "Target user not found",
+        error: "No user found with the given email",
       });
     }
 
@@ -195,61 +195,60 @@ tanushree.put("/make-admin", async (req, res) => {
       Role: "admin",
     });
 
-    res.status(200).json({
-      message: "Student successfully promoted to admin.",
+    return res.status(200).json({
+      message: "✅ Student promoted to admin",
     });
   } catch (err) {
-    console.error("Error promoting student to admin:", err);
-    res.status(500).json({
+    console.error("❌ Error promoting to admin:", err);
+    return res.status(500).json({
       message: "Internal server error",
       error: err.message,
     });
   }
 });
 
-// ✅ Make student
+// ✅ Demote to student
 tanushree.put("/make-student", async (req, res) => {
-  const {superEmail, superPassword, email} = req.body;
+  const { superEmail, superPassword, email } = req.body;
 
   if (!superEmail || !superPassword || !email) {
     return res.status(400).json({
       message: "Missing fields",
-      error: "Please provide superEmail, superPassword, and email",
+      error: "Please provide superEmail, superPassword, and target email",
     });
   }
 
   try {
-    const superDoc = await db.collection("studentsData").doc("superadmin@gmail.com").get();
+    // 🔐 Step 1: Authenticate superadmin
+    const superDoc = await db.collection("studentsData").doc(superEmail).get();
 
     if (!superDoc.exists) {
       return res.status(404).json({
         message: "Superadmin not found",
-        error: "Superadmin document does not exist",
+        error: "No superadmin document found",
       });
     }
 
     const superData = superDoc.data();
 
-    if (
-      superData.superEmail !== superEmail ||
-      superData.superPassword !== superPassword ||
-      superData.Role !== "superadmin"
-    ) {
+    if (superData.password !== superPassword || superData.Role !== "superadmin") {
       return res.status(403).json({
         message: "Invalid superadmin credentials",
-        error: "Authentication failed for superadmin",
+        error: "Password or role mismatch",
       });
     }
 
+    // 👤 Step 2: Find the admin to demote
     const studentSnapshot = await db
       .collection("studentsData")
       .where("email", "==", email)
+      .limit(1)
       .get();
 
     if (studentSnapshot.empty) {
       return res.status(404).json({
-        message: "Student not found",
-        error: "No admin found with the provided email",
+        message: "Target user not found",
+        error: "No user found with the given email",
       });
     }
 
@@ -258,12 +257,12 @@ tanushree.put("/make-student", async (req, res) => {
       Role: "student",
     });
 
-    res.status(200).json({
-      message: "Admin successfully demoted to student.",
+    return res.status(200).json({
+      message: "✅ Admin demoted to student",
     });
   } catch (err) {
-    console.error("Error demoting admin to student:", err);
-    res.status(500).json({
+    console.error("❌ Error demoting to student:", err);
+    return res.status(500).json({
       message: "Internal server error",
       error: err.message,
     });
@@ -370,39 +369,340 @@ tanushree.get("/admins", async (req, res) => {
   }
 });
 
+// ✅ Add a complaint to "complaints" collection
 tanushree.post("/complaints", async (req, res) => {
-  const { email, complaint } = req.body;
-
-  if (!email || !complaint) {
-    return res.status(400).json({ error: "Email and complaint are required." });
-  }
-
   try {
-    const data = {
+    const { email, complaint } = req.body;
+
+    if (!email || !complaint) {
+      return res.status(400).json({ error: "Email and complaint are required" });
+    }
+
+    const docRef = await db.collection("complaints").add({
       email,
       complaint,
       timestamp: admin.firestore.FieldValue.serverTimestamp(),
-    };
-    const docRef = await db.collection("complaints").add(data);
+    });
+
     res.status(201).json({ message: "Complaint submitted", id: docRef.id });
   } catch (err) {
+    console.error("Error submitting complaint:", err);
     res.status(500).json({ error: "Failed to submit complaint" });
   }
 });
 
-tanushree.get("/complaints", async (req, res) => {
-  const role = req.headers.role;
+// ✅ Get all complaints for a specific user
+tanushree.get("/complaints/:email", async (req, res) => {
+  const { email } = req.params;
 
-  if (role !== "admin" && role !== "superadmin") {
-    return res.status(403).json({ error: "Unauthorized access" });
+  if (!email) {
+    return res.status(400).json({ error: "Email is required" });
   }
 
   try {
-    const snapshot = await db.collection("complaints").orderBy("timestamp", "desc").get();
-    const complaints = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    res.status(200).json(complaints);
+    const snapshot = await db
+      .collection("complaints")
+      .where("email", "==", email)
+      .orderBy("timestamp", "desc")
+      .get();
+
+    const complaints = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+
+    res.status(200).json({ complaints });
   } catch (err) {
-    res.status(500).json({ error: "Error fetching complaints" });
+    console.error("Error fetching complaints:", err);
+    res.status(500).json({ error: "Failed to fetch complaints" });
+  }
+});
+
+// ✅ Get all problems
+tanushree.get("/getallproblems", async (req, res) => {
+  try {
+    const snapshot = await db.collection("sheets").get();
+    const problems = [];
+
+    snapshot.forEach(doc => {
+      problems.push({ id: doc.id, ...doc.data() });
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Fetched all problems successfully.",
+      data: problems,
+    });
+  } catch (error) {
+    console.error("Error fetching problems:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch problems.",
+      error: error.message,
+    });
+  }
+});
+
+// ✅ Get all mcqs
+ // GET single MCQ by subject and mcq number
+tanushree.get("/getmcq", async (req, res) => {
+  try {
+    const { subject, id } = req.query;
+
+    // ✅ Validate required parameters
+    if (!subject || !id) {
+      return res.status(400).json({
+        success: false,
+        message: "Both 'subject' and 'id' parameters are required.",
+        example: "/getmcq?subject=c_programming&id=1"
+      });
+    }
+
+    // ✅ Validate MCQ ID is a number
+    const mcqNumber = parseInt(id);
+    if (isNaN(mcqNumber) || mcqNumber < 1) {
+      return res.status(400).json({
+        success: false,
+        message: "MCQ ID must be a valid positive number.",
+      });
+    }
+
+    // 🎯 Subject code mapping with base IDs
+    const subjectMapping = {
+      'c_programming': { code: 'c', baseId: 10000 },
+      'c++_programming': { code: 'cpp', baseId: 20000 },
+      'java': { code: 'java', baseId: 30000 },
+      'python': { code: 'python', baseId: 300000 },
+      'pseudo_code': { code: 'pseudo_code', baseId: 90000 }
+    };
+
+    const subjectInfo = subjectMapping[subject.toLowerCase()];
+    if (!subjectInfo) {
+      return res.status(400).json({
+        success: false,
+        message: `Invalid subject. Available subjects: ${Object.keys(subjectMapping).join(', ')}`,
+        available_subjects: Object.keys(subjectMapping)
+      });
+    }
+
+    // 🔢 Calculate the actual document ID and field ID
+    const actualFieldId = subjectInfo.baseId + (mcqNumber - 1);
+    const docId = `${subject.toLowerCase()}_mcq_${actualFieldId}`;
+
+    console.log(`🔍 Searching for MCQ: Subject="${subject}", MCQ#="${mcqNumber}"`);
+    console.log(`📄 Document ID: "${docId}", Field ID: "${actualFieldId}"`);
+
+    // 🗃️ Navigate through your collection structure: my_mcq_details > lang > question > allmcqs
+    const docRef = db.collection("my_mcq_details")
+                    .doc(subject.toLowerCase())
+                    .collection("question")
+                    .doc("allmcqs");
+
+    const doc = await docRef.get();
+
+    if (!doc.exists) {
+      return res.status(404).json({
+        success: false,
+        message: `No MCQ collection found for subject "${subject}".`,
+      });
+    }
+
+    const allMcqs = doc.data();
+    
+    // 🎯 Find the specific MCQ by field ID
+    const mcqData = allMcqs[actualFieldId.toString()];
+
+    if (!mcqData) {
+      return res.status(404).json({
+        success: false,
+        message: `MCQ #${mcqNumber} not found for subject "${subject}". Looking for field ID: ${actualFieldId}`,
+        searched_field_id: actualFieldId,
+        available_range: `1-${Math.floor((Object.keys(allMcqs).length))} (approximately)`
+      });
+    }
+
+    // ✅ Add metadata to the response
+    const responseData = {
+      ...mcqData,
+      mcq_number: mcqNumber,
+      field_id: actualFieldId,
+      document_id: docId,
+      subject: subject,
+      subject_code: subjectInfo.code
+    };
+
+    console.log(`✅ MCQ found: ${mcqData.question?.substring(0, 50)}...`);
+
+    res.status(200).json({
+      success: true,
+      message: `MCQ #${mcqNumber} fetched successfully for ${subject}`,
+      data: responseData
+    });
+
+  } catch (error) {
+    console.error("❌ Error fetching MCQ:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch MCQ.",
+      error: error.message,
+    });
+  }
+});
+
+// 🎲 Get random MCQ from a subject
+tanushree.get("/getrandom", async (req, res) => {
+  try {
+    const { subject } = req.query;
+
+    if (!subject) {
+      return res.status(400).json({
+        success: false,
+        message: "Subject parameter is required.",
+        example: "/getrandom?subject=java"
+      });
+    }
+
+    console.log(`🎲 Getting random MCQ for subject: ${subject}`);
+
+    // Get the allmcqs document for the subject
+    const docRef = db.collection("my_mcq_details")
+                    .doc(subject.toLowerCase())
+                    .collection("question")
+                    .doc("allmcqs");
+
+    const doc = await docRef.get();
+
+    if (!doc.exists) {
+      return res.status(404).json({
+        success: false,
+        message: `No MCQs found for subject "${subject}".`,
+      });
+    }
+
+    const allMcqs = doc.data();
+    const mcqKeys = Object.keys(allMcqs);
+
+    if (mcqKeys.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: `No MCQs available for subject "${subject}".`,
+      });
+    }
+
+    // Get random MCQ
+    const randomKey = mcqKeys[Math.floor(Math.random() * mcqKeys.length)];
+    const randomMcq = allMcqs[randomKey];
+
+    // Calculate MCQ number from field ID
+    const subjectMapping = {
+      'c_programming': { baseId: 10000 },
+      'c++_programming': { baseId: 20000 },
+      'java': { baseId: 30000 },
+      'python': { baseId: 300000 },
+      'pseudo_code': { baseId: 90000 }
+    };
+
+    const subjectInfo = subjectMapping[subject.toLowerCase()];
+    const mcqNumber = parseInt(randomKey) - subjectInfo.baseId + 1;
+
+    const responseData = {
+      ...randomMcq,
+      mcq_number: mcqNumber,
+      field_id: parseInt(randomKey),
+      subject: subject
+    };
+
+    console.log(`✅ Random MCQ selected: ${randomMcq.question?.substring(0, 50)}...`);
+
+    res.status(200).json({
+      success: true,
+      message: `Random MCQ fetched for ${subject}`,
+      data: responseData,
+      total_available: mcqKeys.length
+    });
+
+  } catch (error) {
+    console.error("❌ Error fetching random MCQ:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch random MCQ.",
+      error: error.message,
+    });
+  }
+});
+
+// 📊 Get MCQ count by subject
+tanushree.get("/getmcqcount", async (req, res) => {
+  try {
+    const { subject } = req.query;
+
+    if (subject) {
+      // Count for specific subject
+      const docRef = db.collection("my_mcq_details")
+                      .doc(subject.toLowerCase())
+                      .collection("question")
+                      .doc("allmcqs");
+
+      const doc = await docRef.get();
+
+      if (!doc.exists) {
+        return res.status(404).json({
+          success: false,
+          message: `Subject "${subject}" not found.`,
+        });
+      }
+
+      const allMcqs = doc.data();
+      const count = Object.keys(allMcqs).length;
+
+      return res.status(200).json({
+        success: true,
+        subject: subject,
+        count: count
+      });
+    }
+
+    // Count for all subjects
+    const subjects = ['c_programming', 'c++_programming', 'java', 'python', 'pseudo_code'];
+    const subjectCounts = {};
+    let totalCount = 0;
+
+    for (const subj of subjects) {
+      try {
+        const docRef = db.collection("my_mcq_details")
+                        .doc(subj)
+                        .collection("question")
+                        .doc("allmcqs");
+
+        const doc = await docRef.get();
+
+        if (doc.exists) {
+          const count = Object.keys(doc.data()).length;
+          subjectCounts[subj] = count;
+          totalCount += count;
+        } else {
+          subjectCounts[subj] = 0;
+        }
+      } catch (err) {
+        console.error(`Error counting ${subj}:`, err);
+        subjectCounts[subj] = 0;
+      }
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "MCQ counts by subject",
+      data: subjectCounts,
+      total: totalCount
+    });
+
+  } catch (error) {
+    console.error("❌ Error getting MCQ count:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to get MCQ count.",
+      error: error.message,
+    });
   }
 });
 
@@ -410,6 +710,9 @@ tanushree.get("/complaints", async (req, res) => {
 tanushree.get("/hello", (req, res) => {
   res.send("working");
 });
-
-// ✅ Export the Express tanushri as Firebase Function
+    
+// ✅ Export the Express tanushree as Firebase Function
 exports.api = functions.https.onRequest(tanushree);
+
+// I m making a web application using mern stack . in that i am using firestore database instead of mongodb. please tell me what should i do 
+// if i want to put all data data from a csv file to a database collection what should be done

@@ -7,22 +7,36 @@ const ProblemContext = createContext();
 // 🎣 Custom hook to use this context
 export const useProblems = () => useContext(ProblemContext);
 
+// 🔤 Hex decoder helper function
+const decodeHex = (hexString) => {
+  if (!hexString || typeof hexString !== "string") return "";
+  try {
+    return decodeURIComponent(
+      hexString
+        .replace(/\s+/g, "")
+        .match(/.{1,2}/g)
+        .map(byte => `%${byte}`)
+        .join("")
+    );
+  } catch (err) {
+    console.error("❌ Failed to decode hex:", err);
+    return hexString;
+  }
+};
+
 // 🌍 Provider component
 export const ProblemProvider = ({ children }) => {
   const [problems, setProblems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // 🆕 New states bro!
   const [selectedSubject, setSelectedSubject] = useState(null);
   const [selectedMcqId, setSelectedMcqId] = useState(null);
 
-  // 🆕 MCQ specific states
   const [currentMcq, setCurrentMcq] = useState(null);
   const [mcqLoading, setMcqLoading] = useState(false);
   const [mcqError, setMcqError] = useState("");
 
-  // 🔍 Fetch function for problems
   const fetchAllProblems = async () => {
     try {
       setLoading(true);
@@ -44,7 +58,6 @@ export const ProblemProvider = ({ children }) => {
     }
   };
 
-  // 🆕 Function to convert display subject to API format
   const convertSubjectToApiFormat = (subject) => {
     const subjectMap = {
       'C Programming': 'c_programming',
@@ -55,8 +68,8 @@ export const ProblemProvider = ({ children }) => {
     };
     return subjectMap[subject] || subject.toLowerCase().replace(/\s+/g, '_');
   };
+  
 
-  // 🆕 Fetch MCQ function
   const fetchMcq = async (subject, mcqId) => {
     if (!subject || !mcqId) {
       setMcqError("Subject and MCQ ID are required");
@@ -66,22 +79,35 @@ export const ProblemProvider = ({ children }) => {
     try {
       setMcqLoading(true);
       setMcqError("");
-      
-      // Convert subject to API format
+
       const apiSubject = convertSubjectToApiFormat(subject);
-      
-      // Construct API URL
       const apiUrl = `https://api-e5q6islzdq-uc.a.run.app/getmcq?subject=${apiSubject}&id=${mcqId}`;
-      
+
       console.log(`🔍 Fetching MCQ: ${apiUrl}`);
-      
+
       const res = await fetch(apiUrl);
       const data = await res.json();
 
       if (data.success) {
-        setCurrentMcq(data.data);
+        const raw = data.data;
+        const answerMap = { "1": "a", "2": "b", "3": "c", "4": "d" };
+
+        const decodedMcq = {
+          ...raw,
+          question: decodeHex(raw.question),
+          options: {
+            a: decodeHex(raw.option1),
+            b: decodeHex(raw.option2),
+            c: decodeHex(raw.option3),
+            d: decodeHex(raw.option4),
+          },
+          correct_answer: answerMap[decodeHex(raw.ans)] || decodeHex(raw.ans),
+          explanation: decodeHex(raw.solution || raw.Solution || "")
+        };
+
+        setCurrentMcq(decodedMcq);
         setMcqError("");
-        console.log(`✅ Fetched MCQ for ${subject} #${mcqId}:`, data.data);
+        console.log("✅ Decoded MCQ:", decodedMcq);
       } else {
         setMcqError(data.message || "Failed to fetch MCQ");
         setCurrentMcq(null);
@@ -95,17 +121,16 @@ export const ProblemProvider = ({ children }) => {
     }
   };
 
-  // 🆕 Auto-fetch MCQ when subject and ID are selected
   useEffect(() => {
     if (selectedSubject && selectedMcqId) {
       fetchMcq(selectedSubject, selectedMcqId);
+   
     } else {
       setCurrentMcq(null);
       setMcqError("");
     }
   }, [selectedSubject, selectedMcqId]);
 
-  // 🆕 Clear MCQ selection function
   const clearMcqSelection = () => {
     setSelectedSubject(null);
     setSelectedMcqId(null);
@@ -113,30 +138,22 @@ export const ProblemProvider = ({ children }) => {
     setMcqError("");
   };
 
-  // 🔁 Fetch on mount
   useEffect(() => {
     fetchAllProblems();
   }, []);
 
   const contextValue = {
-    // Original functionality
     problems,
     loading,
     error,
     refetchProblems: fetchAllProblems,
-    
-    // MCQ selection states
     selectedSubject,
     setSelectedSubject,
     selectedMcqId,
     setSelectedMcqId,
-    
-    // MCQ data and loading states
     currentMcq,
     mcqLoading,
     mcqError,
-    
-    // MCQ functions
     fetchMcq,
     clearMcqSelection,
   };

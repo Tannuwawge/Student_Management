@@ -58,7 +58,13 @@ const handleThemeToggle = () => {
     </h1>
   </div>
 )}
-
+{location.pathname === "/dashboard/mcq" && (
+  <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2">
+    <h1 className=" text-2xl font-bold">
+    MCQ Practice
+    </h1>
+  </div>
+)}
 
     {/* Right Side - Dropdown */}
     <div className="relative">

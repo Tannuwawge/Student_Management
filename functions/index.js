@@ -469,7 +469,7 @@ tanushree.get("/getallproblems", async (req, res) => {
       'c_programming': { code: 'c', baseId: 10000 },
       'c++_programming': { code: 'cpp', baseId: 20000 },
       'java': { code: 'java', baseId: 30000 },
-      'python': { code: 'python', baseId: 300000 },
+      'python': { code: 'python', baseId: 400000 },
       'pseudo_code': { code: 'pseudo_code', baseId: 90000 }
     };
 
@@ -534,7 +534,7 @@ tanushree.get("/getrandom", async (req, res) => {
       'c_programming': { baseId: 10000 },
       'c++_programming': { baseId: 20000 },
       'java': { baseId: 30000 },
-      'python': { baseId: 300000 },
+      'python': { baseId: 400000 },
       'pseudo_code': { baseId: 90000 }
     };
 

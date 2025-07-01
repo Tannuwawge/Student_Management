@@ -297,6 +297,7 @@ export const UserProvider = ({ children }) => {
     <UserContext.Provider
       value={{
         user,
+        setUser,
         email,
         role,
         isAuthLoading,

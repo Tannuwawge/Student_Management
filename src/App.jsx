@@ -11,10 +11,11 @@ import ChangePasswordCard from "./trial/Changepassword";
 import CrudStudents from "./Admin_section/Crudstudents";
 import MakeAdmin from "./tanushree/MakeAdmin";
 import StudentDetails from "./trial/StudentDetails";
-import Complaints from "./trial/Complaints";
+
+
 import InterviewPrep from "./trial/InterviewPrep";
 import Cards from "./cards"; // 👈 import this for index route
-import Mymcq from "./trial/Mymcq";
+import ComplaintCard from "./trial/ComplaintCard";
 
 const AppRoutes = () => {
   const { user } = useUser();
@@ -46,9 +47,8 @@ const AppRoutes = () => {
         <Route path="students" element={<CrudStudents />} />
         <Route path="updatedetails" element={<StudentDetails />} />
         <Route path="superadmin" element={<MakeAdmin />} />
-        <Route path="complaints" element={<Complaints />} />
+        <Route path="complaints" element={<ComplaintCard />} />
         <Route path="interview" element={<InterviewPrep />} />
-          <Route path="mcq" element={<Mymcq />} />
       </Route>
 
       {/* Fallback */}

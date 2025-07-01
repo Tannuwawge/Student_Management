@@ -12,8 +12,9 @@ const ComplaintCard = () => {
   // Fetch previous complaints
   const fetchComplaints = async () => {
     try {
-      const res = await fetch(`https://api-e5q6islzdq-uc.a.run.app/complaints/${user.email}`);
-      const data = await res.json();
+     const res = await fetch(`https://api-e5q6islzdq-uc.a.run.app/complaints/${user.email}`);
+     const data = await res.json();
+       console.log("Fetched complaints:", data);
       if (res.ok) {
         setComplaints(data.complaints || []);
       } else {
@@ -41,7 +42,7 @@ const ComplaintCard = () => {
     setMessage("");
 
     try {
-      const res = await fetch("https://api-e5q6islzdq-uc.a.run.app/complaints", {
+      const res = await fetch("https://api-e5q6islzdq-uc.a.run.app/complaints/", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -126,7 +127,10 @@ const ComplaintCard = () => {
                   <li key={c.id || idx} className="list-group-item">
                     <div className="fw-semibold">{c.complaint}</div>
                     <small className="text-muted">
-                      {c.timestamp || "Time not available"}
+                     {c.timestamp?._seconds
+  ? new Date(c.timestamp._seconds * 1000).toLocaleString()
+  : "Time not available"}
+
 
                     </small>
                   </li>

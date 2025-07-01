@@ -445,29 +445,26 @@ tanushree.get("/getallproblems", async (req, res) => {
 
 // ✅ Get all mcqs
  // GET single MCQ by subject and mcq number
-tanushree.get("/getmcq", async (req, res) => {
+ tanushree.get("/getmcq", async (req, res) => {
   try {
     const { subject, id } = req.query;
 
-    // ✅ Validate required parameters
     if (!subject || !id) {
       return res.status(400).json({
         success: false,
-        message: "Both 'subject' and 'id' parameters are required.",
-        example: "/getmcq?subject=c_programming&id=1"
+        message: "Both 'subject' and 'id' are required.",
+        example: "/getmcq?subject=java&id=1"
       });
     }
 
-    // ✅ Validate MCQ ID is a number
     const mcqNumber = parseInt(id);
     if (isNaN(mcqNumber) || mcqNumber < 1) {
       return res.status(400).json({
         success: false,
-        message: "MCQ ID must be a valid positive number.",
+        message: "ID must be a valid positive number.",
       });
     }
 
-    // 🎯 Subject code mapping with base IDs
     const subjectMapping = {
       'c_programming': { code: 'c', baseId: 10000 },
       'c++_programming': { code: 'cpp', baseId: 20000 },
@@ -480,74 +477,45 @@ tanushree.get("/getmcq", async (req, res) => {
     if (!subjectInfo) {
       return res.status(400).json({
         success: false,
-        message: `Invalid subject. Available subjects: ${Object.keys(subjectMapping).join(', ')}`,
-        available_subjects: Object.keys(subjectMapping)
+        message: `Invalid subject. Choose from: ${Object.keys(subjectMapping).join(', ')}`,
       });
     }
 
-    // 🔢 Calculate the actual document ID and field ID
     const actualFieldId = subjectInfo.baseId + (mcqNumber - 1);
     const docId = `${subject.toLowerCase()}_mcq_${actualFieldId}`;
 
-    console.log(`🔍 Searching for MCQ: Subject="${subject}", MCQ#="${mcqNumber}"`);
-    console.log(`📄 Document ID: "${docId}", Field ID: "${actualFieldId}"`);
-
-    // 🗃️ Navigate through your collection structure: my_mcq_details > lang > question > allmcqs
     const docRef = db.collection("my_mcq_details")
-                    .doc(subject.toLowerCase())
-                    .collection("question")
-                    .doc("allmcqs");
+                     .doc(subject.toLowerCase())
+                     .collection("questions")
+                     .doc(docId);
 
     const doc = await docRef.get();
 
     if (!doc.exists) {
       return res.status(404).json({
         success: false,
-        message: `No MCQ collection found for subject "${subject}".`,
+        message: `MCQ not found: ${docId}`
       });
     }
-
-    const allMcqs = doc.data();
-    
-    // 🎯 Find the specific MCQ by field ID
-    const mcqData = allMcqs[actualFieldId.toString()];
-
-    if (!mcqData) {
-      return res.status(404).json({
-        success: false,
-        message: `MCQ #${mcqNumber} not found for subject "${subject}". Looking for field ID: ${actualFieldId}`,
-        searched_field_id: actualFieldId,
-        available_range: `1-${Math.floor((Object.keys(allMcqs).length))} (approximately)`
-      });
-    }
-
-    // ✅ Add metadata to the response
-    const responseData = {
-      ...mcqData,
-      mcq_number: mcqNumber,
-      field_id: actualFieldId,
-      document_id: docId,
-      subject: subject,
-      subject_code: subjectInfo.code
-    };
-
-    console.log(`✅ MCQ found: ${mcqData.question?.substring(0, 50)}...`);
 
     res.status(200).json({
       success: true,
       message: `MCQ #${mcqNumber} fetched successfully for ${subject}`,
-      data: responseData
+      data: {
+        ...doc.data(),
+        mcq_number: mcqNumber,
+        field_id: actualFieldId,
+        document_id: docId,
+        subject,
+        subject_code: subjectInfo.code
+      }
     });
-
   } catch (error) {
-    console.error("❌ Error fetching MCQ:", error);
-    res.status(500).json({
-      success: false,
-      message: "Failed to fetch MCQ.",
-      error: error.message,
-    });
+    console.error("❌ Error in /getmcq:", error);
+    res.status(500).json({ success: false, message: "Server error", error: error.message });
   }
 });
+
 
 // 🎲 Get random MCQ from a subject
 tanushree.get("/getrandom", async (req, res) => {
@@ -562,38 +530,6 @@ tanushree.get("/getrandom", async (req, res) => {
       });
     }
 
-    console.log(`🎲 Getting random MCQ for subject: ${subject}`);
-
-    // Get the allmcqs document for the subject
-    const docRef = db.collection("my_mcq_details")
-                    .doc(subject.toLowerCase())
-                    .collection("question")
-                    .doc("allmcqs");
-
-    const doc = await docRef.get();
-
-    if (!doc.exists) {
-      return res.status(404).json({
-        success: false,
-        message: `No MCQs found for subject "${subject}".`,
-      });
-    }
-
-    const allMcqs = doc.data();
-    const mcqKeys = Object.keys(allMcqs);
-
-    if (mcqKeys.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: `No MCQs available for subject "${subject}".`,
-      });
-    }
-
-    // Get random MCQ
-    const randomKey = mcqKeys[Math.floor(Math.random() * mcqKeys.length)];
-    const randomMcq = allMcqs[randomKey];
-
-    // Calculate MCQ number from field ID
     const subjectMapping = {
       'c_programming': { baseId: 10000 },
       'c++_programming': { baseId: 20000 },
@@ -603,88 +539,72 @@ tanushree.get("/getrandom", async (req, res) => {
     };
 
     const subjectInfo = subjectMapping[subject.toLowerCase()];
-    const mcqNumber = parseInt(randomKey) - subjectInfo.baseId + 1;
+    if (!subjectInfo) {
+      return res.status(400).json({ success: false, message: "Invalid subject." });
+    }
 
-    const responseData = {
-      ...randomMcq,
-      mcq_number: mcqNumber,
-      field_id: parseInt(randomKey),
-      subject: subject
-    };
+    const questionsRef = db.collection("my_mcq_details")
+                           .doc(subject.toLowerCase())
+                           .collection("questions");
 
-    console.log(`✅ Random MCQ selected: ${randomMcq.question?.substring(0, 50)}...`);
+    const snapshot = await questionsRef.get();
+    const docs = snapshot.docs;
+
+    if (!docs.length) {
+      return res.status(404).json({ success: false, message: "No MCQs found." });
+    }
+
+    const randomDoc = docs[Math.floor(Math.random() * docs.length)];
+    const fieldId = parseInt(randomDoc.id.split("_").pop());
+    const mcqNumber = fieldId - subjectInfo.baseId + 1;
 
     res.status(200).json({
       success: true,
-      message: `Random MCQ fetched for ${subject}`,
-      data: responseData,
-      total_available: mcqKeys.length
+      message: `Random MCQ for ${subject}`,
+      data: {
+        ...randomDoc.data(),
+        mcq_number: mcqNumber,
+        field_id: fieldId,
+        document_id: randomDoc.id,
+        subject
+      },
+      total_available: docs.length
     });
-
   } catch (error) {
-    console.error("❌ Error fetching random MCQ:", error);
-    res.status(500).json({
-      success: false,
-      message: "Failed to fetch random MCQ.",
-      error: error.message,
-    });
+    console.error("❌ Error in /getrandom:", error);
+    res.status(500).json({ success: false, message: "Server error", error: error.message });
   }
 });
+
 
 // 📊 Get MCQ count by subject
 tanushree.get("/getmcqcount", async (req, res) => {
   try {
     const { subject } = req.query;
 
+    const subjectList = ['c_programming', 'c++_programming', 'java', 'python', 'pseudo_code'];
+    
     if (subject) {
-      // Count for specific subject
-      const docRef = db.collection("my_mcq_details")
-                      .doc(subject.toLowerCase())
-                      .collection("question")
-                      .doc("allmcqs");
-
-      const doc = await docRef.get();
-
-      if (!doc.exists) {
-        return res.status(404).json({
-          success: false,
-          message: `Subject "${subject}" not found.`,
-        });
-      }
-
-      const allMcqs = doc.data();
-      const count = Object.keys(allMcqs).length;
+      const doc = await db.collection("my_mcq_details").doc(subject.toLowerCase()).get();
+      const count = doc.data()?.totalCount || 0;
 
       return res.status(200).json({
         success: true,
-        subject: subject,
-        count: count
+        subject,
+        count
       });
     }
 
-    // Count for all subjects
-    const subjects = ['c_programming', 'c++_programming', 'java', 'python', 'pseudo_code'];
     const subjectCounts = {};
-    let totalCount = 0;
+    let total = 0;
 
-    for (const subj of subjects) {
+    for (const subj of subjectList) {
       try {
-        const docRef = db.collection("my_mcq_details")
-                        .doc(subj)
-                        .collection("question")
-                        .doc("allmcqs");
-
-        const doc = await docRef.get();
-
-        if (doc.exists) {
-          const count = Object.keys(doc.data()).length;
-          subjectCounts[subj] = count;
-          totalCount += count;
-        } else {
-          subjectCounts[subj] = 0;
-        }
-      } catch (err) {
-        console.error(`Error counting ${subj}:`, err);
+        const doc = await db.collection("my_mcq_details").doc(subj).get();
+        const count = doc.data()?.totalCount || 0;
+        subjectCounts[subj] = count;
+        total += count;
+      } catch (e) {
         subjectCounts[subj] = 0;
       }
     }
@@ -693,24 +613,20 @@ tanushree.get("/getmcqcount", async (req, res) => {
       success: true,
       message: "MCQ counts by subject",
       data: subjectCounts,
-      total: totalCount
+      total
     });
-
   } catch (error) {
-    console.error("❌ Error getting MCQ count:", error);
-    res.status(500).json({
-      success: false,
-      message: "Failed to get MCQ count.",
-      error: error.message,
-    });
+    console.error("❌ Error in /getmcqcount:", error);
+    res.status(500).json({ success: false, message: "Server error", error: error.message });
   }
 });
+
 
 // ✅ Test route
 tanushree.get("/hello", (req, res) => {
   res.send("working");
 });
-    
+
 // ✅ Export the Express tanushree as Firebase Function
 exports.api = functions.https.onRequest(tanushree);
 

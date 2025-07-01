@@ -1,131 +1,38 @@
 // src/context/ProblemProvider.js
 import React, { createContext, useContext, useEffect, useState } from "react";
 
-// Create the context
+// 🌱 Create the context
 const ProblemContext = createContext();
 
-// Custom hook to use this context
+// 🎣 Custom hook to use this context
 export const useProblems = () => useContext(ProblemContext);
 
-// Provider component
+// 🌍 Provider component
 export const ProblemProvider = ({ children }) => {
   const [problems, setProblems] = useState([]);
-  const [mcqs, setMcqs] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [mcqLoading, setMcqLoading] = useState(false);
   const [error, setError] = useState("");
+
+  // 🆕 New states bro!
+  const [selectedSubject, setSelectedSubject] = useState(null);
+  const [selectedMcqId, setSelectedMcqId] = useState(null);
+
+  // 🆕 MCQ specific states
+  const [currentMcq, setCurrentMcq] = useState(null);
+  const [mcqLoading, setMcqLoading] = useState(false);
   const [mcqError, setMcqError] = useState("");
-  const [mcqsLastFetch, setMcqsLastFetch] = useState(null);
 
-  // 🔧 localStorage keys
-  const MCQ_STORAGE_KEY = 'cached_mcqs';
-  const MCQ_TIMESTAMP_KEY = 'mcqs_last_fetch';
-  const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
-
-  // 🗄️ Check if MCQs are cached and still valid
-  const isMcqCacheValid = () => {
-    const timestamp = localStorage.getItem(MCQ_TIMESTAMP_KEY);
-    if (!timestamp) return false;
-    
-    const now = Date.now();
-    const lastFetch = parseInt(timestamp);
-    return (now - lastFetch) < CACHE_DURATION;
-  };
-
-  // 💾 Load MCQs from localStorage
-  const loadMcqsFromCache = () => {
-    try {
-      const cachedMcqs = localStorage.getItem(MCQ_STORAGE_KEY);
-      const timestamp = localStorage.getItem(MCQ_TIMESTAMP_KEY);
-      
-      if (cachedMcqs && timestamp) {
-        const parsedMcqs = JSON.parse(cachedMcqs);
-        setMcqs(parsedMcqs);
-        setMcqsLastFetch(new Date(parseInt(timestamp)));
-        console.log(`✅ Loaded ${parsedMcqs.length} MCQs from cache`);
-        return true;
-      }
-    } catch (err) {
-      console.warn("Failed to load MCQs from cache:", err);
-      // Clear corrupted cache
-      localStorage.removeItem(MCQ_STORAGE_KEY);
-      localStorage.removeItem(MCQ_TIMESTAMP_KEY);
-    }
-    return false;
-  };
-
-  // 💾 Save MCQs to localStorage  
-  const saveMcqsToCache = (mcqData) => {
-    try {
-      const timestamp = Date.now();
-      localStorage.setItem(MCQ_STORAGE_KEY, JSON.stringify(mcqData));
-      localStorage.setItem(MCQ_TIMESTAMP_KEY, timestamp.toString());
-      setMcqsLastFetch(new Date(timestamp));
-      console.log(`✅ Cached ${mcqData.length} MCQs to localStorage`);
-    } catch (err) {
-      console.warn("Failed to cache MCQs:", err);
-      // Handle storage quota exceeded
-      if (err.name === 'QuotaExceededError') {
-        setMcqError("Storage quota exceeded. Please clear browser data.");
-      }
-    }
-  };
-
-  // 🗑️ Clear MCQ cache
-  const clearMcqCache = () => {
-    localStorage.removeItem(MCQ_STORAGE_KEY);
-    localStorage.removeItem(MCQ_TIMESTAMP_KEY);
-    setMcqs([]);
-    setMcqsLastFetch(null);
-    console.log("🗑️ MCQ cache cleared");
-  };
-  const hexToString = (hex) => {
-    if (!hex || typeof hex !== 'string') return hex;
-    
-    try {
-      // Remove spaces and convert hex pairs to characters
-      const cleanHex = hex.replace(/\s+/g, '');
-      let result = '';
-      
-      for (let i = 0; i < cleanHex.length; i += 2) {
-        const hexPair = cleanHex.substr(i, 2);
-        const charCode = parseInt(hexPair, 16);
-        if (!isNaN(charCode)) {
-          result += String.fromCharCode(charCode);
-        }
-      }
-      
-      return result;
-    } catch (err) {
-      console.warn("Failed to convert hex to string:", hex);
-      return hex; // Return original if conversion fails
-    }
-  };
-
-  // 🔄 Function to process MCQ data and convert hex fields to strings
-  const processMcqData = (mcqData) => {
-    return mcqData.map(mcq => ({
-      ...mcq,
-      question: hexToString(mcq.question),
-      option1: hexToString(mcq.option1),
-      option2: hexToString(mcq.option2),
-      option3: hexToString(mcq.option3),
-      option4: hexToString(mcq.option4),
-      Solution: hexToString(mcq.Solution),
-      solution: hexToString(mcq.solution)
-    }));
-  };
-
-  // 🧠 Fetch function for problems
+  // 🔍 Fetch function for problems
   const fetchAllProblems = async () => {
     try {
       setLoading(true);
-      const res = await fetch("https://vaibhav-e5q6islzdq-uc.a.run.app/getallproblems");
+      const res = await fetch("https://api-e5q6islzdq-uc.a.run.app/getallproblems");
       const data = await res.json();
 
       if (data.success && Array.isArray(data.data)) {
         setProblems(data.data);
         setError("");
+        console.log(`✅ Fetched ${data.data.length} problems`);
       } else {
         setError("Invalid data received from API");
       }
@@ -137,73 +44,101 @@ export const ProblemProvider = ({ children }) => {
     }
   };
 
-  // 🧠 Fetch function for MCQs with caching
-  const fetchAllMcqs = async (forceRefresh = false) => {
+  // 🆕 Function to convert display subject to API format
+  const convertSubjectToApiFormat = (subject) => {
+    const subjectMap = {
+      'C Programming': 'c_programming',
+      'C++ Programming': 'c++_programming',
+      'Java': 'java',
+      'Python': 'python',
+      'Pseudo Code': 'pseudo_code'
+    };
+    return subjectMap[subject] || subject.toLowerCase().replace(/\s+/g, '_');
+  };
+
+  // 🆕 Fetch MCQ function
+  const fetchMcq = async (subject, mcqId) => {
+    if (!subject || !mcqId) {
+      setMcqError("Subject and MCQ ID are required");
+      return;
+    }
+
     try {
       setMcqLoading(true);
       setMcqError("");
-
-      // Check cache first (unless force refresh)
-      if (!forceRefresh && isMcqCacheValid()) {
-        const loaded = loadMcqsFromCache();
-        if (loaded) {
-          setMcqLoading(false);
-          return; // Use cached data
-        }
-      }
-
-      console.log("🌐 Fetching MCQs from server...");
-      const res = await fetch("https://api-e5q6islzdq-uc.a.run.app/getallmcqs");
+      
+      // Convert subject to API format
+      const apiSubject = convertSubjectToApiFormat(subject);
+      
+      // Construct API URL
+      const apiUrl = `https://api-e5q6islzdq-uc.a.run.app/getmcq?subject=${apiSubject}&id=${mcqId}`;
+      
+      console.log(`🔍 Fetching MCQ: ${apiUrl}`);
+      
+      const res = await fetch(apiUrl);
       const data = await res.json();
 
-      if (data.success && Array.isArray(data.data)) {
-        // Process MCQ data to convert hex to strings
-        const processedMcqs = processMcqData(data.data);
-        setMcqs(processedMcqs);
-        
-        // Save to cache
-        saveMcqsToCache(processedMcqs);
-        
+      if (data.success) {
+        setCurrentMcq(data.data);
         setMcqError("");
+        console.log(`✅ Fetched MCQ for ${subject} #${mcqId}:`, data.data);
       } else {
-        setMcqError("Invalid MCQ data received from API");
+        setMcqError(data.message || "Failed to fetch MCQ");
+        setCurrentMcq(null);
       }
     } catch (err) {
-      console.error("❌ Error fetching MCQs:", err);
-      setMcqError("Failed to fetch MCQs");
+      console.error("❌ Error fetching MCQ:", err);
+      setMcqError("Failed to fetch MCQ");
+      setCurrentMcq(null);
     } finally {
       setMcqLoading(false);
     }
   };
 
-  // 🔁 Load MCQs on mount
+  // 🆕 Auto-fetch MCQ when subject and ID are selected
+  useEffect(() => {
+    if (selectedSubject && selectedMcqId) {
+      fetchMcq(selectedSubject, selectedMcqId);
+    } else {
+      setCurrentMcq(null);
+      setMcqError("");
+    }
+  }, [selectedSubject, selectedMcqId]);
+
+  // 🆕 Clear MCQ selection function
+  const clearMcqSelection = () => {
+    setSelectedSubject(null);
+    setSelectedMcqId(null);
+    setCurrentMcq(null);
+    setMcqError("");
+  };
+
+  // 🔁 Fetch on mount
   useEffect(() => {
     fetchAllProblems();
-    
-    // Try to load MCQs from cache first
-    const loaded = loadMcqsFromCache();
-    if (!loaded || !isMcqCacheValid()) {
-      // Cache miss or expired - fetch from server
-      fetchAllMcqs();
-    }
   }, []);
 
   const contextValue = {
-    // Problems
+    // Original functionality
     problems,
     loading,
     error,
     refetchProblems: fetchAllProblems,
     
-    // MCQs
-    mcqs,
+    // MCQ selection states
+    selectedSubject,
+    setSelectedSubject,
+    selectedMcqId,
+    setSelectedMcqId,
+    
+    // MCQ data and loading states
+    currentMcq,
     mcqLoading,
     mcqError,
-    fetchAllMcqs,
-    refetchMcqs: () => fetchAllMcqs(true), // Force refresh
-    clearMcqCache,
-    mcqsLastFetch,
-    isMcqCacheValid: isMcqCacheValid()
+    
+    // MCQ functions
+    fetchMcq,
+    clearMcqSelection,
   };
 
   return (

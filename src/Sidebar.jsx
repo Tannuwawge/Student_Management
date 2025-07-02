@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useUser } from './context/UserProvider';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
@@ -7,17 +7,18 @@ import {
   MdChecklist,
   MdCalendarToday,
   MdSettings,
-  MdLock,
-  MdLockOpen,
+  MdChevronLeft,
+  MdChevronRight,
 } from 'react-icons/md';
 
-export default function Sidebar({ sidebarLocked, setSidebarLocked }) {
-  const { theme } = useUser();
-  const [isCollapsed, setIsCollapsed] = useState(true); // ✅ starts collapsed
+export default function Sidebar() {
+  const { theme, sidebarExpanded, setSidebarExpanded } = useUser();
 
   const location = useLocation();
   const navigate = useNavigate();
-  const [activeItem, setActiveItem] = useState(location.pathname.split('/')[1] || 'dashboard');
+  const [activeItem, setActiveItem] = React.useState(
+    location.pathname.split('/')[1] || 'dashboard'
+  );
 
   const menuItems = [
     { name: 'Dashboard', icon: <MdDashboard size={24} />, id: 'dashboard' },
@@ -27,14 +28,6 @@ export default function Sidebar({ sidebarLocked, setSidebarLocked }) {
     { name: 'Settings', icon: <MdSettings size={24} />, id: 'settings' },
   ];
 
-  const handleMouseEnter = () => {
-    if (!sidebarLocked) setIsCollapsed(false);
-  };
-
-  const handleMouseLeave = () => {
-    if (!sidebarLocked) setIsCollapsed(true);
-  };
-
   const handleClick = (id) => {
     setActiveItem(id);
     navigate(`/${id}`);
@@ -42,20 +35,19 @@ export default function Sidebar({ sidebarLocked, setSidebarLocked }) {
 
   const collapsedWidth = 'w-[90px]';
 
+  const isCollapsed = !sidebarExpanded;
+
   return (
     <div
       className={`h-full flex flex-col justify-between transition-all duration-150 ease-in-out rounded-r-xl border-r overflow-hidden
         ${theme === 'dark'
-          ? 'bg-gradient-to-br from-[#1a1a1a] via-[#1f1f1f] to-[#1a1a1a] bg-opacity-60 text-gray-200 border-gray-700 shadow-[4px_0_20px_rgba(0,0,0,0.5)] backdrop-blur-md'
-          : 'bg-gradient-to-br from-white via-[#f9f9f9] to-white bg-opacity-60 text-gray-900 border-gray-200 shadow-[4px_0_20px_rgba(0,0,0,0.1)] backdrop-blur-md'
-        }
+          ? 'bg-gradient-to-br from-[#1a1a1a] via-[#1f1f1f] to-[#1a1a1a] text-gray-200 border-gray-700 shadow-[4px_0_20px_rgba(0,0,0,0.5)]'
+          : 'bg-gradient-to-br from-white via-[#f9f9f9] to-white text-gray-900 border-gray-200 shadow-[4px_0_20px_rgba(0,0,0,0.1)]'}
         ${isCollapsed ? `${collapsedWidth} px-2 py-3 items-center` : 'w-64 px-4 py-5 items-start'}
       `}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
     >
-      {/* Logo Section */}
-      <div className={`flex items-center mb-6 font-bold tracking-tight ${isCollapsed ? 'justify-center w-full' : ''}`}>
+      {/* Logo */}
+      <div className={`flex items-center mb-6 font-bold ${isCollapsed ? 'justify-center w-full' : ''}`}>
         <span className="text-xl bg-gradient-to-r from-indigo-500 to-pink-500 text-transparent bg-clip-text">🚀</span>
         {!isCollapsed && (
           <span className="ml-2 text-lg bg-gradient-to-r from-indigo-500 to-pink-500 text-transparent bg-clip-text">
@@ -72,15 +64,13 @@ export default function Sidebar({ sidebarLocked, setSidebarLocked }) {
             <li key={item.id} title={isCollapsed ? item.name : ''}>
               <button
                 onClick={() => handleClick(item.id)}
-                className={`w-full flex items-center h-10 rounded-lg font-medium text-sm transition-all duration-150 ease-in-out
+                className={`w-full flex items-center h-10 rounded-lg font-medium text-sm transition-all
                   ${isCollapsed ? 'justify-center px-1' : 'justify-start pl-3 pr-2'}
-                  ${
-                    isActive
-                      ? 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-md scale-[0.97]'
-                      : theme === 'dark'
-                      ? 'hover:bg-gray-700/40 text-gray-300'
-                      : 'hover:bg-gray-100 text-gray-700'
-                  }
+                  ${isActive
+                    ? 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-md scale-[0.97]'
+                    : theme === 'dark'
+                    ? 'hover:bg-gray-700/40 text-gray-300'
+                    : 'hover:bg-gray-100 text-gray-700'}
                 `}
               >
                 <span className="min-w-[24px]">{item.icon}</span>
@@ -91,20 +81,19 @@ export default function Sidebar({ sidebarLocked, setSidebarLocked }) {
         })}
       </ul>
 
-      {/* Footer – Lock Button */}
+      {/* Footer – Toggle Button */}
       <div className={`w-full mt-auto ${isCollapsed ? 'flex justify-center' : 'pl-2'}`}>
         <button
-          onClick={() => setSidebarLocked(!sidebarLocked)}
+          onClick={() => setSidebarExpanded(!sidebarExpanded)}
           className={`flex items-center text-sm px-2 py-1.5 rounded-full transition duration-150
             ${theme === 'dark'
               ? 'bg-gray-800/60 hover:bg-gray-700/60 text-gray-200'
-              : 'bg-gray-200/60 hover:bg-gray-300/60 text-gray-800'
-            }
+              : 'bg-gray-200/60 hover:bg-gray-300/60 text-gray-800'}
             ${isCollapsed ? 'justify-center w-9' : 'w-full'}
           `}
         >
-          {sidebarLocked ? <MdLock size={20} /> : <MdLockOpen size={20} />}
-          {!isCollapsed && <span className="ml-2">{sidebarLocked ? 'Unlock' : 'Lock'}</span>}
+          {isCollapsed ? <MdChevronRight size={20} /> : <MdChevronLeft size={20} />}
+          {!isCollapsed && <span className="ml-2">{isCollapsed ? 'Expand' : 'Collapse'}</span>}
         </button>
       </div>
     </div>

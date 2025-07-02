@@ -11,7 +11,8 @@ import ChangePasswordCard from "./trial/Changepassword";
 import CrudStudents from "./Admin_section/Crudstudents";
 import MakeAdmin from "./tanushree/MakeAdmin";
 import StudentDetails from "./trial/StudentDetails";
-
+import Mymcq from './trial/Mymcq'
+import Mytest from "./trial/Mytest";
 
 import InterviewPrep from "./trial/InterviewPrep";
 import Cards from "./cards"; // 👈 import this for index route
@@ -49,6 +50,8 @@ const AppRoutes = () => {
         <Route path="superadmin" element={<MakeAdmin />} />
         <Route path="complaints" element={<ComplaintCard />} />
         <Route path="interview" element={<InterviewPrep />} />
+        <Route path="mcq" element={<Mymcq />} />
+        <Route path="test" element={<Mytest />} />
       </Route>
 
       {/* Fallback */}

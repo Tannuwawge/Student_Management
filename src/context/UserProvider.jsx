@@ -10,8 +10,8 @@ export const UserProvider = ({ children }) => {
   const [email, setEmail] = useState("");
   const [role, setRole] = useState("");
   const [isAuthLoading, setIsAuthLoading] = useState(true);
-    const [sidebarLocked, setSidebarLocked] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarExpanded, setSidebarExpanded] = useState(false); // 🚀 single source of truth
+
   
   // ✅ Initialize theme from localStorage or default to "light"
   const [theme, setTheme] = useState(() => {
@@ -321,10 +321,9 @@ export const UserProvider = ({ children }) => {
         currentUserDetails,
         setCurrentUserDetails,
         // Sidebar state
-        sidebarLocked,
-        setSidebarLocked,
-        sidebarOpen,
-        setSidebarOpen,
+        sidebarExpanded,
+setSidebarExpanded,
+
       }}
     >
       {children}

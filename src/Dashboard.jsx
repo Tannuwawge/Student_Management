@@ -9,25 +9,14 @@ export default function Dashboard() {
   const location = useLocation();
   const isMainDashboard = location.pathname === '/dashboard';
 
-  const {
-    sidebarOpen,
-    setSidebarOpen,
-    sidebarLocked,
-    setSidebarLocked,
-  } = useUser();
+  const { sidebarExpanded } = useUser(); // 🔥 Only need this now
 
   const [sidebarWidth, setSidebarWidth] = useState(0);
 
-  // ✅ Set initial width immediately after mount
+  // ✅ Update sidebar width based on expanded state
   useEffect(() => {
-    setSidebarWidth(sidebarLocked || sidebarOpen ? 256 : 90);
-  }, [sidebarLocked, sidebarOpen]);
-
-  const handleSidebarHover = (entering) => {
-    if (!sidebarLocked) {
-      setSidebarOpen(entering);
-    }
-  };
+    setSidebarWidth(sidebarExpanded ? 256 : 90);
+  }, [sidebarExpanded]);
 
   return (
     <div className="h-screen flex flex-col relative">
@@ -42,13 +31,8 @@ export default function Dashboard() {
         <div
           className="absolute top-0 left-0 h-full transition-all duration-150 ease-in-out"
           style={{ width: `${sidebarWidth}px` }}
-          onMouseEnter={() => handleSidebarHover(true)}
-          onMouseLeave={() => handleSidebarHover(false)}
         >
-          <Sidebar
-            sidebarLocked={sidebarLocked}
-            setSidebarLocked={setSidebarLocked}
-          />
+          <Sidebar />
         </div>
 
         {/* Main Body */}

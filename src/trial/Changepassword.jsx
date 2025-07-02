@@ -26,9 +26,7 @@ const ChangePasswordCard = () => {
           <h4 className="mb-0">🔐 Change Password</h4>
         </Card.Header>
         <Card.Body>
-
-
-          <Form.Group className="mb-3" controlId="email" >
+          <Form.Group className="mb-3" controlId="email">
             <Form.Label>Email</Form.Label>
             <Form.Control
               type="email"
@@ -75,7 +73,9 @@ const ChangePasswordCard = () => {
             </Form.Group>
 
             {message && (
-              <Alert variant={message.includes("success") ? "success" : "danger"}>
+              <Alert
+                variant={message.includes("success") ? "success" : "danger"}
+              >
                 {message}
               </Alert>
             )}

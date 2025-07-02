@@ -56,8 +56,8 @@ const InterviewPrep = () => {
 
   return (
     <>
-    <div className={`bg-${getThemeClass('gray-100', 'gray-900')} text-${getThemeClass('black', 'white')} min-h-screen p-1 `}>
-      {/* Back button – shown only on mobile */}
+   <div className={`h-[100dvh] md:h-screen overflow-hidden bg-${getThemeClass('gray-100', 'gray-900')} text-${getThemeClass('black', 'white')} p-1 pt-0`}>
+   {/* Back button – shown only on mobile */}
       <div className="mb-2 md:hidden px-2">
         <button
           onClick={() => navigate("/dashboard")}
@@ -84,7 +84,7 @@ const InterviewPrep = () => {
       <div className={`mb-2 mt-2 bg-${getThemeClass('gray-200', 'gray-800')}/60 backdrop-blur-xl border border-${getThemeClass('gray-300', 'gray-700')} p-2 rounded-lg`}>
       
       {/* 🔘 Top Section: Filter Toggle + Stats */}
-      <div className="flex justify-between items-center mb-2">
+      <div className="flex justify-between items-center mb-1">
         <div className={`text-base text-${getThemeClass('purple-600', 'purple-400')} px-1`}>
           Showing <span className="font-semibold">{filteredProblems.length}</span> of <span className="font-semibold">{problems.length}</span> problems
         </div>

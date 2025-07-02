@@ -15,7 +15,7 @@ const decodeHex = (hexString) => {
       hexString
         .replace(/\s+/g, "")
         .match(/.{1,2}/g)
-        .map(byte => `%${byte}`)
+        .map((byte) => `%${byte}`)
         .join("")
     );
   } catch (err) {
@@ -37,10 +37,25 @@ export const ProblemProvider = ({ children }) => {
   const [mcqLoading, setMcqLoading] = useState(false);
   const [mcqError, setMcqError] = useState("");
 
+  // 🧠 Subject map to match backend format
+  const convertSubjectToApiFormat = (subject) => {
+    const subjectMap = {
+      "C Programming": "c_programming",
+      "C++ Programming": "c++_programming",
+      Java: "java",
+      Python: "python",
+      "Pseudo Code": "pseudo_code",
+    };
+    return subjectMap[subject] || subject.toLowerCase().replace(/\s+/g, "_");
+  };
+
+  // 🚀 Fetch all problems
   const fetchAllProblems = async () => {
     try {
       setLoading(true);
-      const res = await fetch("https://api-e5q6islzdq-uc.a.run.app/getallproblems");
+      const res = await fetch(
+        "https://api-e5q6islzdq-uc.a.run.app/getallproblems"
+      );
       const data = await res.json();
 
       if (data.success && Array.isArray(data.data)) {
@@ -58,23 +73,17 @@ export const ProblemProvider = ({ children }) => {
     }
   };
 
-  const convertSubjectToApiFormat = (subject) => {
-    const subjectMap = {
-      'C Programming': 'c_programming',
-      'C++ Programming': 'c++_programming',
-      'Java': 'java',
-      'Python': 'python',
-      'Pseudo Code': 'pseudo_code'
-    };
-    return subjectMap[subject] || subject.toLowerCase().replace(/\s+/g, '_');
-  };
-  
-
+  // 🎯 Fetch 1 MCQ by subject + id
   const fetchMcq = async (subject, mcqId) => {
     if (!subject || !mcqId) {
+      console.warn("⚠️ Missing subject or MCQ ID", { subject, mcqId });
       setMcqError("Subject and MCQ ID are required");
       return;
     }
+
+    console.log("🔁 fetchMcq called:");
+    console.log("👉 Subject (param):", subject);
+    console.log("👉 MCQ ID (param):", mcqId);
 
     try {
       setMcqLoading(true);
@@ -83,7 +92,7 @@ export const ProblemProvider = ({ children }) => {
       const apiSubject = convertSubjectToApiFormat(subject);
       const apiUrl = `https://api-e5q6islzdq-uc.a.run.app/getmcq?subject=${apiSubject}&id=${mcqId}`;
 
-      console.log(`🔍 Fetching MCQ: ${apiUrl}`);
+      console.log(`🔍 API Fetching: ${apiUrl}`);
 
       const res = await fetch(apiUrl);
       const data = await res.json();
@@ -102,11 +111,10 @@ export const ProblemProvider = ({ children }) => {
             d: decodeHex(raw.option4),
           },
           correct_answer: answerMap[decodeHex(raw.ans)] || decodeHex(raw.ans),
-          explanation: decodeHex(raw.solution || raw.Solution || "")
+          explanation: decodeHex(raw.solution || raw.Solution || ""),
         };
 
         setCurrentMcq(decodedMcq);
-        setMcqError("");
         console.log("✅ Decoded MCQ:", decodedMcq);
       } else {
         setMcqError(data.message || "Failed to fetch MCQ");
@@ -121,16 +129,18 @@ export const ProblemProvider = ({ children }) => {
     }
   };
 
+  // 💡 Keep MCQ fetch in sync with selected subject + ID
   useEffect(() => {
     if (selectedSubject && selectedMcqId) {
+      console.log("🧠 useEffect triggered:", selectedSubject, selectedMcqId);
       fetchMcq(selectedSubject, selectedMcqId);
-   
     } else {
       setCurrentMcq(null);
       setMcqError("");
     }
   }, [selectedSubject, selectedMcqId]);
 
+  // 🚿 Reset all on clear
   const clearMcqSelection = () => {
     setSelectedSubject(null);
     setSelectedMcqId(null);
@@ -138,6 +148,15 @@ export const ProblemProvider = ({ children }) => {
     setMcqError("");
   };
 
+  // ✅ Fix: Reset selectedMcqId when subject changes
+  const handleSubjectSelect = (subject) => {
+    const firstMcqId = getFirstMcqId(subject); // You must define this function!
+    console.log("🎯 Subject selected:", subject, "→ First ID:", firstMcqId);
+    setSelectedSubject(subject);
+    setSelectedMcqId(firstMcqId);
+  };
+
+  // 🛫 Initial fetch
   useEffect(() => {
     fetchAllProblems();
   }, []);
@@ -148,7 +167,7 @@ export const ProblemProvider = ({ children }) => {
     error,
     refetchProblems: fetchAllProblems,
     selectedSubject,
-    setSelectedSubject,
+    setSelectedSubject: handleSubjectSelect,
     selectedMcqId,
     setSelectedMcqId,
     currentMcq,

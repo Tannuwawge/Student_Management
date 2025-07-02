@@ -1,41 +1,73 @@
-import React, { useState } from 'react';
-import { ChevronLeft, ChevronRight, Code, CheckCircle, XCircle } from 'lucide-react';
+import React, { useState } from "react";
+import { useNavigate } from 'react-router-dom';
 
-// Mock theme provider - replace with your actual theme context
+// Mock theme provider
 const useTheme = () => {
-  const [theme, setTheme] = useState('light');
+  const [theme, setTheme] = useState("light");
   return { theme, setTheme };
 };
 
-// Mock context for demonstration - replace with your actual useProblems hook
+// Mock context for demonstration
 const useProblems = () => {
   const [selectedSubject, setSelectedSubject] = useState(null);
   const [selectedMcqId, setSelectedMcqId] = useState(null);
   const [selectedAnswer, setSelectedAnswer] = useState(null);
   const [showAnswer, setShowAnswer] = useState(false);
   
-  // Mock MCQ data
-  const currentMcq = selectedSubject && selectedMcqId ? {
-    question: "What is the correct way to declare a variable in C++?",
-    code: `// Example code
-int main() {
-    // Which declaration is correct?
-    return 0;
-}`,
-    options: {
-      a: "int variable_name;",
-      b: "variable_name int;", 
-      c: "declare int variable_name;",
-      d: "var int variable_name;"
-    },
-    correct_answer: "a",
-    explanation: "In C++, variables are declared with the data type followed by the variable name."
-  } : null;
+
+  const getMockMcq = (id) => {
+    const questions = [
+      {
+        question: "What is the correct way to declare a variable in C++?",
+        code: `int main() {\n    // Which declaration is correct?\n    return 0;\n}`,
+        options: {
+          a: "int variable_name;",
+          b: "variable_name int;",
+          c: "declare int variable_name;",
+          d: "var int variable_name;",
+        },
+        correct_answer: "a",
+        explanation:
+          "In C++, variables are declared with the data type followed by the variable name.",
+      },
+      {
+        question: "Which loop guarantees at least one execution?",
+        code: `for(int i=0; i<10; i++) { }\nwhile(condition) { }\ndo { } while(condition);`,
+        options: {
+          a: "for loop",
+          b: "while loop",
+          c: "do-while loop",
+          d: "all loops guarantee execution",
+        },
+        correct_answer: "c",
+        explanation:
+          "The do-while loop executes the body at least once before checking the condition.",
+      },
+      {
+        question: "What is the time complexity of binary search?",
+        code: `int binarySearch(int arr[], int n, int x) {\n    int left = 0, right = n - 1;\n    while (left <= right) {\n        int mid = left + (right - left) / 2;\n        if (arr[mid] == x) return mid;\n        if (arr[mid] < x) left = mid + 1;\n        else right = mid - 1;\n    }\n    return -1;\n}`,
+        options: {
+          a: "O(n)",
+          b: "O(log n)",
+          c: "O(n log n)",
+          d: "O(1)",
+        },
+        correct_answer: "b",
+        explanation:
+          "Binary search divides the search space in half with each comparison.",
+      },
+    ];
+
+    return questions[id % questions.length];
+  };
+
+  const currentMcq =
+    selectedSubject && selectedMcqId ? getMockMcq(selectedMcqId) : null;
 
   return {
     selectedSubject,
     setSelectedSubject,
-    selectedMcqId, 
+    selectedMcqId,
     setSelectedMcqId,
     currentMcq,
     mcqLoading: false,
@@ -49,46 +81,34 @@ int main() {
       setSelectedMcqId(null);
       setSelectedAnswer(null);
       setShowAnswer(false);
-    }
+    },
   };
 };
 
 export default function CompactMcqSelector() {
-  const { theme } = useTheme();
+ 
   const {
     selectedSubject,
     setSelectedSubject,
     selectedMcqId,
     setSelectedMcqId,
     currentMcq,
-    mcqLoading,
-    mcqError,
     selectedAnswer,
     setSelectedAnswer,
     showAnswer,
     setShowAnswer,
-    clearMcqSelection
+    theme, 
+  
   } = useProblems();
-
-  const [currentPage, setCurrentPage] = useState(0);
+  const navigate = useNavigate();
   
   const programmingLanguages = [
-    'C Programming', 
-    'C++', 
-    'Java', 
-    'Python', 
-    'Pseudo Code'
+    "C Programming",
+    "C++",
+    "Java",
+    "Python",
+    "Pseudo Code",
   ];
-
-  const mcqsPerPage = 20;
-  const totalMcqs = 60;
-  const totalPages = Math.ceil(totalMcqs / mcqsPerPage);
-  
-  const getCurrentPageMcqs = () => {
-    const start = currentPage * mcqsPerPage + 1;
-    const end = Math.min((currentPage + 1) * mcqsPerPage, totalMcqs);
-    return Array.from({ length: end - start + 1 }, (_, i) => start + i);
-  };
 
   const handleSubjectClick = (subject) => {
     setSelectedSubject(subject);
@@ -113,290 +133,253 @@ export default function CompactMcqSelector() {
 
   const isCorrect = showAnswer && selectedAnswer === currentMcq?.correct_answer;
 
-  // Theme-based classes
-  const isDark = theme === 'dark';
-  const bgClass = isDark ? 'bg-gray-900' : 'bg-gray-50';
-  const cardBgClass = isDark ? 'bg-gray-800' : 'bg-white';
-  const textClass = isDark ? 'text-gray-100' : 'text-gray-900';
-  const textSecondaryClass = isDark ? 'text-gray-300' : 'text-gray-600';
-  const borderClass = isDark ? 'border-gray-700' : 'border-gray-200';
-  console.log("hello  ",selectedSubject)
+  // Theme classes
+  const isDark = theme === "dark";
+  const bgClass = isDark ? "bg-gray-900" : "bg-gray-50";
+  const cardBgClass = isDark ? "bg-gray-800" : "bg-white";
+  const textClass = isDark ? "text-gray-100" : "text-gray-900";
+  const textSecondaryClass = isDark ? "text-gray-300" : "text-gray-600";
+  const borderClass = isDark ? "border-gray-700" : "border-gray-200";
+
+  // Generate 100 MCQ numbers
+  const mcqNumbers = Array.from({ length: 100 }, (_, i) => i + 1);
+
   return (
-    <div className={`  ${bgClass} `}>
-      <div className="max-w-8xl mx-auto mt-1 p-2"> 
-     
-        
-        <div className="grid grid-cols-12 gap-4">
-          {/* Subject Selection - Col 3 */}
-          <div className="col-span-12 md:col-span-3">
-            <div className={`${cardBgClass} rounded-lg shadow-sm border ${borderClass} p-4 h-fit`}>
-              <h2 className={`text-lg font-semibold mb-4 ${textClass}`}>Subjects</h2>
-              <div className="space-y-2">
-                {programmingLanguages.map((lang) => (
-                  <button
-                    key={lang}
-                    onClick={() => handleSubjectClick(lang)}
-                    className={`w-full px-4 py-3 rounded-lg text-sm font-medium transition-all text-left ${
-                      selectedSubject === lang
-                        ? 'bg-blue-500 text-white shadow-md'
-                        : isDark
-                        ? 'bg-gray-700 text-gray-200 hover:bg-blue-600 hover:text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-blue-50 hover:text-blue-600'
-                    }`}
-                  >
-                    {lang}
-                  </button>
-                ))}
-              </div>
-              
-              {/* Clear Selection */}
-              {selectedSubject && (
-                <button 
-                  onClick={clearMcqSelection}
-                  className={`w-full mt-4 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                    isDark 
-                      ? 'bg-red-600 text-white hover:bg-red-700' 
-                      : 'bg-red-500 text-white hover:bg-red-600'
-                  }`}
-                >
-                  Clear Selection
-                </button>
-              )}
-            </div>
+    <div className={`h-screen overflow-hidden ${bgClass} p-1 pt-0`}>
+  <div className="h-full max-w-8xl mx-auto">
+        {/* Ultra-Compact Header */}
+        <div className="flex justify-between items-center mb-2">
+          <div className="w-full flex items-center justify-between ">
+            {/* Left side - empty (you can use it later if needed) */}
+            <div className="w-1/3"></div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-12 gap-0 h-[calc(100vh-80px)]">
+          {/* Left: MCQ Grid (25% width) */}
+          <div className="col-span-2">
+          <div className={`${cardBgClass} rounded border ${borderClass} p-2 w-full max-w-[300px] h-[80vh] flex flex-col`}>
+  {/* 👉 Take Test Button */}
+  <button
+      onClick={() => navigate('/dashboard/test')}
+      className="w-full mb-2 px-3 py-2 bg-white font-bold text-gray-800 border rounded hover:bg-blue-100 transition-all"
+    >
+      Take Test
+    </button>
+
+
+  {/* 👉 Subject Dropdown */}
+  <select
+    value={selectedSubject || ""}
+    onChange={(e) => handleSubjectClick(e.target.value)}
+    className={`w-full px-2 py-1 rounded text-sm font-medium border focus:outline-none ${
+      isDark
+        ? "bg-gray-700 text-gray-200 border-gray-600"
+        : "bg-white text-gray-700 border-gray-300"
+    }`}
+  >
+    <option value="" disabled>
+      Select Subject
+    </option>
+    {programmingLanguages.map((lang) => (
+      <option key={lang} value={lang}>
+        {lang}
+      </option>
+    ))}
+  </select>
+
+  {/* 👉 MCQ Numbers Grid */}
+  {selectedSubject ? (
+    <div className="flex-1 overflow-y-auto scrollbar-custom mt-3 pr-1">
+      <div className="grid grid-cols-5 gap-2">
+        {mcqNumbers.map((num) => (
+          <button
+            key={num}
+            onClick={() => handleMCQClick(num)}
+            className={`w-10 h-10 rounded-full text-[15px] font-semibold flex items-center justify-center transition-all duration-150 ${
+              selectedMcqId === num
+                ? "bg-blue-500 text-white shadow-sm scale-105"
+                : isDark
+                ? "bg-gray-700 text-gray-200 hover:bg-blue-600 hover:text-white"
+                : "bg-gray-100 text-gray-700 hover:bg-blue-500 hover:text-white"
+            }`}
+          >
+            {num}
+          </button>
+        ))}
+      </div>
+    </div>
+  ) : (
+    <div className="flex items-center justify-center flex-1">
+      <p className={`text-sm ${textSecondaryClass} text-center`}>
+        Select a subject first
+      </p>
+    </div>
+  )}
+</div>
+
           </div>
 
-          {/* MCQ Numbers and Content - Col 9 */}
-          <div className="col-span-12 md:col-span-9 space-y-4">
-            {/* MCQ Numbers Selection */}
-            {selectedSubject && (
-              <div className={`${cardBgClass} rounded-md border ${borderClass} p-2`}>
-                 <div className="flex items-center justify-between mb-2 text-sm">
-                  <h2 className={`text-lg font-semibold ${textClass}`}>
-                    Select MCQ (1-{totalMcqs})
-                  </h2>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => setCurrentPage(Math.max(0, currentPage - 1))}
-                      disabled={currentPage === 0}
-                      className={`p-2 rounded-md transition-colors ${
-                        isDark 
-                          ? 'hover:bg-gray-700 disabled:opacity-50' 
-                          : 'hover:bg-gray-100 disabled:opacity-50'
-                      } disabled:cursor-not-allowed`}
-                    >
-                      <ChevronLeft size={20} className={textSecondaryClass} />
-                    </button>
-                    <span className={`text-sm ${textSecondaryClass} px-2`}>
-                      {currentPage + 1}/{totalPages}
+          {/* Right: Main Content (75% width) */}
+          <div className="col-span-10 flex flex-col">
+            {currentMcq ? (
+              <div
+                className={`${cardBgClass} rounded border ${borderClass} flex-1 flex flex-col `}
+              >
+                {/* Question Header - Left-aligned & Larger */}
+                <div
+                  className={`px-4 py-2 border-b ${borderClass} ${
+                    isDark ? "bg-gray-700/30" : "bg-gray-50"
+                  }`}
+                >
+                  <div className="flex items-start gap-3">
+                    <span className="px-2 py-1 mt-3 bg-blue-500 text-white rounded text-xs font-bold">
+                      Q{selectedMcqId}
                     </span>
-                    <button
-                      onClick={() => setCurrentPage(Math.min(totalPages - 1, currentPage + 1))}
-                      disabled={currentPage === totalPages - 1}
-                      className={`p-2 rounded-md transition-colors ${
-                        isDark 
-                          ? 'hover:bg-gray-700 disabled:opacity-50' 
-                          : 'hover:bg-gray-100 disabled:opacity-50'
-                      } disabled:cursor-not-allowed`}
+                    <p
+                      className={`text-base font-semibold ${textClass} text-left`}
                     >
-                      <ChevronRight size={20} className={textSecondaryClass} />
-                    </button>
+                      {currentMcq.question}
+                    </p>
                   </div>
                 </div>
-                
-                <div className="grid grid-cols-10 gap-2">
-                  {getCurrentPageMcqs().map((num) => (
-                    <button
-                      key={num}
-                      onClick={() => handleMCQClick(num)}
-                      className={`w-10 h-10 rounded-lg text-sm font-medium transition-all ${
-                        selectedMcqId === num
-                          ? 'bg-green-500 text-white shadow-md transform scale-105'
-                          : isDark
-                          ? 'bg-gray-700 text-gray-200 hover:bg-green-600 hover:text-white hover:shadow-sm'
-                          : 'bg-gray-100 text-gray-700 hover:bg-green-50 hover:text-green-600 hover:shadow-sm'
-                      }`}
-                    >
-                      {num}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
 
-            {/* Current Selection Status */}
-            {selectedSubject && selectedMcqId && (
-              <div className={`rounded-lg border p-3 ${
-                isDark 
-                  ? 'bg-gradient-to-r from-blue-900/20 to-green-900/20 border-gray-700' 
-                  : 'bg-gradient-to-r from-blue-50 to-green-50 border-gray-200'
-              }`}>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                    <span className={`text-sm font-medium ${textClass}`}>
-                      {selectedSubject} - Question #{selectedMcqId}
-                    
-                    </span>
-                  </div>
-                </div>
-              </div>  
-            )}
-
-            {/* MCQ Display */}
-            {currentMcq && (
-              <div className={`${cardBgClass} rounded-lg shadow-sm border ${borderClass} overflow-hidden`}>
-                {/* Question Header */}
-                <div className={`px-6 py-4 border-b ${borderClass} ${
-                  isDark ? 'bg-gray-700/50' : 'bg-gray-50'
-                }`}>
-                  <div className="flex items-center gap-2 mb-2">
-                    <Code size={20} className="text-blue-500" />
-                    <span className={`font-semibold ${textClass}`}>
-                      {selectedSubject} - Question #{selectedMcqId}
-                    </span>
-                  </div>
-                  <p className={`leading-relaxed ${textClass}`}>{currentMcq.question}</p>
-                </div>
-
-                {/* Code Section */}
+                {/* Code Block - Compact but readable */}
                 {currentMcq.code && (
-                  <div className={`px-6 py-4 ${isDark ? 'bg-black' : 'bg-gray-900'} text-gray-100`}>
-                    <pre className="text-sm overflow-x-auto text-left">
+                  <div
+                    className={`px-4 m-1 py-3 rounded-md ${
+                      isDark
+                        ? "bg-gray-800 text-gray-100"
+                        : "bg-gray-200 text-gray-800"
+                    } font-mono text-base border ${borderClass}`}
+                  >
+                    <pre className="whitespace-pre-wrap break-words leading-snug text-left">
                       <code>{currentMcq.code}</code>
                     </pre>
                   </div>
                 )}
 
                 {/* Options */}
-                <div className="p-6">
-                  <h4 className={`font-semibold mb-4 ${textClass}`}>Choose your answer:</h4>
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 mb-6">
+                <div className="p-3 flex-1 flex flex-col">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
                     {Object.entries(currentMcq.options).map(([key, value]) => {
                       const isSelected = selectedAnswer === key;
-                      const isCorrectAnswer = showAnswer && key === currentMcq.correct_answer;
-                      const isWrongAnswer = showAnswer && isSelected && key !== currentMcq.correct_answer;
-                      
+                      const isCorrectAnswer =
+                        showAnswer && key === currentMcq.correct_answer;
+                      const isWrongAnswer =
+                        showAnswer &&
+                        isSelected &&
+                        key !== currentMcq.correct_answer;
+
                       return (
                         <button
                           key={key}
                           onClick={() => !showAnswer && handleAnswerClick(key)}
                           disabled={showAnswer}
-                          className={`p-4 rounded-lg border-2 text-left transition-all ${
+                          className={`flex items-center gap-2 px-3 py-2 rounded-md border text-[15px] font-medium transition-all duration-200 ${
                             isCorrectAnswer
-                              ? 'bg-green-50 border-green-500 text-green-700'
+                              ? "bg-green-100 border-green-500 text-green-800"
                               : isWrongAnswer
-                              ? 'bg-red-50 border-red-500 text-red-700'
+                              ? "bg-red-100 border-red-500 text-red-800"
                               : isSelected
                               ? isDark
-                                ? 'bg-blue-900/50 border-blue-500 text-blue-300'
-                                : 'bg-blue-50 border-blue-500 text-blue-700'
+                                ? "bg-blue-900/50 border-blue-500 text-blue-200"
+                                : "bg-blue-50 border-blue-500 text-blue-700"
                               : isDark
-                              ? `bg-gray-700 border-gray-600 text-gray-200 hover:border-blue-500 hover:bg-blue-900/30`
-                              : `bg-white border-gray-200 hover:border-blue-300 hover:bg-blue-50`
-                          } ${showAnswer ? 'cursor-default' : 'cursor-pointer'}`}
+                              ? "bg-gray-700 border-gray-600 text-gray-200 hover:bg-gray-600 hover:border-blue-500"
+                              : "bg-white border-gray-200 hover:border-blue-400 hover:bg-blue-50"
+                          } ${
+                            showAnswer ? "cursor-default" : "cursor-pointer"
+                          } shadow-sm hover:shadow-md active:scale-[0.98]`}
                         >
-                          <div className="flex items-center gap-3">
-                            <span className={`w-6 h-6 rounded-full text-sm font-bold flex items-center justify-center ${
+                          <span
+                            className={`w-5 h-5 flex items-center justify-center rounded-full text-xs font-bold ${
                               isCorrectAnswer
-                                ? 'bg-green-500 text-white'
+                                ? "bg-green-500 text-white"
                                 : isWrongAnswer
-                                ? 'bg-red-500 text-white'
+                                ? "bg-red-500 text-white"
                                 : isSelected
-                                ? 'bg-blue-500 text-white'
+                                ? "bg-blue-500 text-white"
                                 : isDark
-                                ? 'bg-gray-600 text-gray-200'
-                                : 'bg-gray-200 text-gray-700'
-                            }`}>
-                              {key.toUpperCase()}
-                            </span>
-                            <span className="flex-1">{value}</span>
-                            {showAnswer && isCorrectAnswer && (
-                              <CheckCircle size={20} className="text-green-500" />
-                            )}
-                            {showAnswer && isWrongAnswer && (
-                              <XCircle size={20} className="text-red-500" />
-                            )}
-                          </div>
+                                ? "bg-gray-600 text-gray-200"
+                                : "bg-gray-200 text-gray-700"
+                            }`}
+                          >
+                            {key.toUpperCase()}
+                          </span>
+                          <span className="flex-1 text-left">{value}</span>
+                          {showAnswer && isCorrectAnswer && (
+                            <span className="text-green-500 text-sm">✔</span>
+                          )}
+                          {showAnswer && isWrongAnswer && (
+                            <span className="text-red-500 text-sm">✖</span>
+                          )}
                         </button>
                       );
                     })}
                   </div>
 
-                  {/* Submit Button */}
-                  {selectedAnswer && !showAnswer && (
-                    <div className="flex justify-center">
+                  {/* Submit & Feedback */}
+                  <div className="space-y-2">
+                    {selectedAnswer && !showAnswer && (
                       <button
                         onClick={handleSubmitAnswer}
-                        className="px-8 py-3 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 transition-colors shadow-sm"
+                        className="w-full py-2 bg-blue-500 text-white rounded-md text-sm font-medium hover:bg-blue-600 transition"
                       >
                         Submit Answer
                       </button>
-                    </div>
-                  )}
+                    )}
 
-                  {/* Result */}
-                  {showAnswer && (
-                    <div className={`p-4 rounded-lg ${
-                      isCorrect 
-                        ? isDark 
-                          ? 'bg-green-900/20 border border-green-700' 
-                          : 'bg-green-50 border border-green-200'
-                        : isDark 
-                          ? 'bg-red-900/20 border border-red-700' 
-                          : 'bg-red-50 border border-red-200'
-                    }`}>
-                      <div className="flex items-center gap-2 mb-2">
-                        {isCorrect ? (
-                          <CheckCircle size={24} className="text-green-500" />
-                        ) : (
-                          <XCircle size={24} className="text-red-500" />
-                        )}
-                        <span className={`font-semibold ${
-                          isCorrect 
-                            ? isDark ? 'text-green-400' : 'text-green-700'
-                            : isDark ? 'text-red-400' : 'text-red-700'
-                        }`}>
-                          {isCorrect ? 'Correct!' : 'Incorrect'}
-                        </span>
-                      </div>
-                      
-                      {!isCorrect && (
-                        <p className={`text-sm mb-2 ${textSecondaryClass}`}>
-                          Correct answer: <span className="font-medium">{currentMcq.correct_answer.toUpperCase()}</span>
-                        </p>
-                      )}
-                      
-                      {currentMcq.explanation && (
-                        <div className={`mt-3 p-3 rounded border-l-4 ${
-                          isDark 
-                            ? 'bg-blue-900/20 border-blue-500 text-blue-300' 
-                            : 'bg-blue-50 border-blue-400 text-blue-800'
-                        }`}>
-                          <p className="text-sm">
-                            <span className="font-medium">Explanation:</span> {currentMcq.explanation}
-                          </p>
+                    {showAnswer && (
+                      <div
+                        className={`p-3 rounded text-sm border ${
+                          isCorrect
+                            ? isDark
+                              ? "bg-green-900/20 border-green-700 text-green-400"
+                              : "bg-green-50 border-green-200 text-green-800"
+                            : isDark
+                            ? "bg-red-900/20 border-red-700 text-red-400"
+                            : "bg-red-50 border-red-200 text-red-800"
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 mb-1">
+                          <span>{isCorrect ? "✅" : "❌"}</span>
+                          <span className="font-bold">
+                            {isCorrect ? "Correct!" : "Incorrect"}
+                          </span>
+                          {!isCorrect && (
+                            <span>
+                              Correct:{" "}
+                              <strong>
+                                {currentMcq.correct_answer.toUpperCase()}
+                              </strong>
+                            </span>
+                          )}
                         </div>
-                      )}
-                    </div>
-                  )}
+                        {currentMcq.explanation && (
+                          <p className="leading-snug">
+                            <strong>💡</strong> {currentMcq.explanation}
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
-            )}
-
-            {mcqLoading && (
-              <div className="flex items-center justify-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-                <span className={`ml-2 ${textSecondaryClass}`}>Loading MCQ...</span>
-              </div>
-            )}
-
-            {mcqError && (
-              <div className={`border px-4 py-3 rounded-lg ${
-                isDark 
-                  ? 'bg-red-900/20 border-red-700 text-red-400' 
-                  : 'bg-red-50 border-red-200 text-red-700'
-              }`}>
-                <strong>Error:</strong> {mcqError}
+            ) : (
+              <div
+                className={`${cardBgClass} rounded border ${borderClass} flex-1 flex items-center justify-center`}
+              >
+                <div className="text-center">
+                  <span className="text-4xl block mb-2">
+                    {selectedSubject ? "💻" : "📚"}
+                  </span>
+                  <p className={`text-sm ${textSecondaryClass}`}>
+                    {selectedSubject
+                      ? "Select an MCQ number →"
+                      : "Choose a subject above"}
+                  </p>
+                </div>
               </div>
             )}
           </div>

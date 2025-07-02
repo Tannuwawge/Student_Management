@@ -18,3 +18,21 @@ h1, h2, h3, p {
   margin: 0 auto;
   padding: 2rem;
 }
+/* 🌀 Custom thin scrollbar styling */
+.scrollbar-custom::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scrollbar-custom::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-custom::-webkit-scrollbar-thumb {
+  background-color: rgba(100, 100, 100, 0.3); /* semi-transparent grey */
+  border-radius: 10px;
+}
+
+.scrollbar-custom {
+  scrollbar-width: thin; /* Firefox */
+  scrollbar-color: rgba(100, 100, 100, 0.3) transparent;
+}

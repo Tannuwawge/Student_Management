@@ -150,9 +150,7 @@ useEffect(() => {
     </div>
   ))}
 </div>
-
-
-              <div className="mt-4 text-center">
+       <div className="mt-4 text-center">
                 <Link to="/" className="btn btn-secondary">
                   Back to Dashboard
                 </Link>

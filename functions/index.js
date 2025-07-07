@@ -620,6 +620,116 @@ tanushree.get("/getmcqcount", async (req, res) => {
     res.status(500).json({ success: false, message: "Server error", error: error.message });
   }
 });
+//get notes by subject and unit
+tanushree.get('/api/notes', async (req, res) => {
+  const { subject, unit } = req.query;
+
+  if (!subject || !unit) {
+    return res.status(400).json({ error: 'subject and unit are required' });
+  }
+
+  try {
+    const unitsRef = db.collection('NotesStudy')
+      .doc(subject)
+      .collection('units');
+
+    const snapshot = await unitsRef.get();
+
+    let match = null;
+    const queryTitle = unit.toLowerCase().trim();
+
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      const fullHeading = data.heading?.toLowerCase().trim();
+
+      // 🔎 Extract title-only (remove unit number if present)
+      const titleOnly = fullHeading?.replace(/^(\d+(\.\d+)?\.?)\s*/, '').trim();
+
+      // 💥 Flexible match: if query is contained in the title
+      if (titleOnly.includes(queryTitle)) {
+        match = { id: doc.id, data };
+      }
+    });
+
+    if (!match) {
+      return res.status(404).json({ 
+        error: 'Unit not found by partial title match',
+        tried: unit,
+        availableHeadings: snapshot.docs.map(doc => doc.data().heading)
+      });
+    }
+
+    return res.json({
+      subject,
+      unit: match.id,  // actual document ID
+      data: match.data
+    });
+
+  } catch (err) {
+    console.error('🔥 Firestore error:', err);
+    return res.status(500).json({ error: 'Something went wrong' });
+  }
+});
+
+// 📍 GET /api/subjects
+tanushree.get('/api/subjects', async (req, res) => {
+  try {
+    const notesRef = db.collection('NotesStudy');
+    const snapshot = await notesRef.listDocuments();
+    const subjects = snapshot.map(doc => doc.id);
+
+    return res.json({ subjects });
+  } catch (error) {
+    console.error("🔥 Error fetching subjects:", error);
+    return res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+// 📍 GET /api/units?subject=adv-java
+tanushree.get('/api/units', async (req, res) => {
+  const { subject } = req.query;
+
+  if (!subject) {
+    return res.status(400).json({ error: "Subject is required" });
+  }
+
+  try {
+    const unitsRef = db.collection('NotesStudy').doc(subject).collection('units');
+    const snapshot = await unitsRef.get();
+
+    const units = snapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        heading: data.heading || doc.id,
+        unit: data.unit || "", // could be something like "2.4" or ""
+      };
+    });
+
+    // ✨ Sort units: by numeric unit first (if available), fallback to heading
+    units.sort((a, b) => {
+      const getNum = (val) => {
+        const num = parseFloat(val.unit || "");
+        return isNaN(num) ? Infinity : num;
+      };
+
+      const numA = getNum(a);
+      const numB = getNum(b);
+
+      if (numA !== numB) return numA - numB;
+      return a.heading.localeCompare(b.heading);
+    });
+
+    return res.json({ subject, units });
+  } catch (error) {
+    console.error("🔥 Error fetching units:", error);
+    return res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+
+
+
+
 
 
 // ✅ Test route
@@ -630,5 +740,4 @@ tanushree.get("/hello", (req, res) => {
 // ✅ Export the Express tanushree as Firebase Function
 exports.api = functions.https.onRequest(tanushree);
 
-// I m making a web application using mern stack . in that i am using firestore database instead of mongodb. please tell me what should i do 
-// if i want to put all data data from a csv file to a database collection what should be done
+// I m making a web application using mern stack . in that i am using firestore database instead of mongodb.  

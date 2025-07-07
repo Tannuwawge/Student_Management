@@ -109,7 +109,7 @@ export default function Cards() {
       color: "from-sky-500 to-blue-600",
       darkColor: "from-sky-600 to-blue-700",
       size: "small",
-      link: "/dashboard/mynotes",
+      link: "/dashboard/notes",
       visible: normalizedRole === "student"
     },
     {

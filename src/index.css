@@ -36,3 +36,13 @@ h1, h2, h3, p {
   scrollbar-width: thin; /* Firefox */
   scrollbar-color: rgba(100, 100, 100, 0.3) transparent;
 }
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body, html, #root {
+  height: 100%;
+  font-family: 'Segoe UI', sans-serif;
+}

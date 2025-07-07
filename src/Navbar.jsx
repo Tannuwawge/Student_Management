@@ -77,6 +77,11 @@ export default function Navbar() {
             </div>
           )}
 
+{location.pathname === "/dashboard/notes" && (
+            <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2">
+              <h1 className=" text-2xl font-bold">Notes</h1>
+            </div>
+          )}
           {/* Right Side - Dropdown */}
           <div className="relative">
             <button

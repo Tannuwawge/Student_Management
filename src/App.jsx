@@ -15,7 +15,7 @@ import Mymcq from './trial/Mymcq'
 import Mytest from "./trial/Mytest";
 
 import InterviewPrep from "./trial/InterviewPrep";
-import Cards from "./cards"; // 👈 import this for index route
+import Cards from "./Cards"; // 👈 import this for index route
 import ComplaintCard from "./trial/ComplaintCard";
 import Notes from "./trial/Notes";
 
@@ -53,7 +53,7 @@ const AppRoutes = () => {
         <Route path="interview" element={<InterviewPrep />} />
         <Route path="mcq" element={<Mymcq />} />
         <Route path="test" element={<Mytest />} />
-         <Route path="notes" element={<Notes/>} />
+        <Route path="notes" element={<Notes/>} />
       </Route>
 
       {/* Fallback */}
